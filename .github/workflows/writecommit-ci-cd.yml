@@ -4,12 +4,12 @@ on:
   push:
     branches: [ main, develop ]
     paths:
-      - 'Tools/Write-Commit/**'
+      - '**'
       - '.github/workflows/writecommit-*.yml'
   pull_request:
     branches: [ main ]
     paths:
-      - 'Tools/Write-Commit/**'
+      - '**'
       - '.github/workflows/writecommit-*.yml'
 
 env:
@@ -30,13 +30,13 @@ jobs:
         dotnet-version: ${{ env.DOTNET_VERSION }}
     
     - name: Restore dependencies
-      run: dotnet restore Tools/Write-Commit/${{ env.PROJECT_NAME }}.csproj
+      run: dotnet restore ${{ env.PROJECT_NAME }}.csproj
     
     - name: Build
-      run: dotnet build Tools/Write-Commit/${{ env.PROJECT_NAME }}.csproj --no-restore --configuration Release
+      run: dotnet build ${{ env.PROJECT_NAME }}.csproj --no-restore --configuration Release
     
     - name: Test
-      run: dotnet test Tools/Write-Commit/${{ env.PROJECT_NAME }}.csproj --no-build --configuration Release --verbosity normal
+      run: dotnet test ${{ env.PROJECT_NAME }}.csproj --no-build --configuration Release --verbosity normal
 
   build:
     name: Build WriteCommit
@@ -55,13 +55,13 @@ jobs:
         dotnet-version: ${{ env.DOTNET_VERSION }}
     
     - name: Restore dependencies
-      run: dotnet restore Tools/Write-Commit/${{ env.PROJECT_NAME }}.csproj
+      run: dotnet restore ${{ env.PROJECT_NAME }}.csproj
     
     - name: Build
-      run: dotnet build Tools/Write-Commit/${{ env.PROJECT_NAME }}.csproj --no-restore --configuration Release
+      run: dotnet build ${{ env.PROJECT_NAME }}.csproj --no-restore --configuration Release
     
     - name: Publish
-      run: dotnet publish Tools/Write-Commit/${{ env.PROJECT_NAME }}.csproj --no-build --configuration Release --output ./publish
+      run: dotnet publish ${{ env.PROJECT_NAME }}.csproj --no-build --configuration Release --output ./publish
     
     - name: Upload build artifacts
       uses: actions/upload-artifact@v4
@@ -92,7 +92,7 @@ jobs:
       uses: gittools/actions/gitversion/execute@v1.1.1
       with:
         useConfigFile: true
-        configFilePath: Tools/Write-Commit/GitVersion.yml
+        configFilePath: GitVersion.yml
     
     - name: Download all build artifacts
       uses: actions/download-artifact@v4
