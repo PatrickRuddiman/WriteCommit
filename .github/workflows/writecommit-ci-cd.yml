@@ -1,0 +1,143 @@
+name: WriteCommit CI/CD
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'Tools/Write-Commit/**'
+      - '.github/workflows/writecommit-*.yml'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'Tools/Write-Commit/**'
+      - '.github/workflows/writecommit-*.yml'
+
+env:
+  DOTNET_VERSION: '8.0.x'
+  PROJECT_NAME: 'WriteCommit'
+
+jobs:
+  test:
+    name: Test WriteCommit
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+    
+    - name: Restore dependencies
+      run: dotnet restore Tools/Write-Commit/${{ env.PROJECT_NAME }}.csproj
+    
+    - name: Build
+      run: dotnet build Tools/Write-Commit/${{ env.PROJECT_NAME }}.csproj --no-restore --configuration Release
+    
+    - name: Test
+      run: dotnet test Tools/Write-Commit/${{ env.PROJECT_NAME }}.csproj --no-build --configuration Release --verbosity normal
+
+  build:
+    name: Build WriteCommit
+    needs: test
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+    
+    - name: Restore dependencies
+      run: dotnet restore Tools/Write-Commit/${{ env.PROJECT_NAME }}.csproj
+    
+    - name: Build
+      run: dotnet build Tools/Write-Commit/${{ env.PROJECT_NAME }}.csproj --no-restore --configuration Release
+    
+    - name: Publish
+      run: dotnet publish Tools/Write-Commit/${{ env.PROJECT_NAME }}.csproj --no-build --configuration Release --output ./publish
+    
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: writecommit-build-${{ matrix.os }}
+        path: ./publish
+        retention-days: 30
+  release:
+    name: Create GitHub Release
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    permissions:
+      contents: write
+    
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Required for GitVersion
+    
+    - name: Install GitVersion
+      uses: gittools/actions/gitversion/setup@v1.1.1
+      with:
+        versionSpec: '5.x'
+    
+    - name: Determine Version
+      id: gitversion
+      uses: gittools/actions/gitversion/execute@v1.1.1
+      with:
+        useConfigFile: true
+        configFilePath: Tools/Write-Commit/GitVersion.yml
+    
+    - name: Download all build artifacts
+      uses: actions/download-artifact@v4
+      with:
+        path: ./artifacts
+    
+    - name: Create release archives
+      run: |
+        cd artifacts
+        
+        # Create Windows release
+        pushd writecommit-build-windows-latest
+        zip -r ../writecommit-windows-x64-v${{ steps.gitversion.outputs.majorMinorPatch }}.zip .
+        popd
+        
+        # Create Linux release
+        pushd writecommit-build-ubuntu-latest
+        tar -czf ../writecommit-linux-x64-v${{ steps.gitversion.outputs.majorMinorPatch }}.tar.gz .
+        popd
+        
+        # Create macOS release
+        pushd writecommit-build-macos-latest
+        tar -czf ../writecommit-macos-x64-v${{ steps.gitversion.outputs.majorMinorPatch }}.tar.gz .
+        popd
+
+    
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v1
+      with:
+        tag_name: v${{ steps.gitversion.outputs.majorMinorPatch }}
+        name: WriteCommit v${{ steps.gitversion.outputs.majorMinorPatch }}
+        body: |
+          ## WriteCommit v${{ steps.gitversion.outputs.majorMinorPatch }}
+          
+          ### Downloads
+          - **Windows (x64)**: writecommit-windows-x64-v${{ steps.gitversion.outputs.majorMinorPatch }}.zip
+          - **Linux (x64)**: writecommit-linux-x64-v${{ steps.gitversion.outputs.majorMinorPatch }}.tar.gz
+          - **macOS (x64)**: writecommit-macos-x64-v${{ steps.gitversion.outputs.majorMinorPatch }}.tar.gz
+          
+          ### Changes
+          This release includes builds for Windows, Linux, and macOS platforms.
+        files: |
+          artifacts/writecommit-windows-x64-v${{ steps.gitversion.outputs.majorMinorPatch }}.zip
+          artifacts/writecommit-linux-x64-v${{ steps.gitversion.outputs.majorMinorPatch }}.tar.gz
+          artifacts/writecommit-macos-x64-v${{ steps.gitversion.outputs.majorMinorPatch }}.tar.gz
+        draft: false
+        prerelease: false
+        generate_release_notes: true
