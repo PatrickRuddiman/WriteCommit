@@ -6,7 +6,7 @@ set -e
 
 # Configuration
 REPO="PatrickRuddiman/Toolkit"
-TOOL_NAME="writecommit"
+TOOL_NAME="WriteCommit"
 INSTALL_DIR="$HOME/.local/share/WriteCommit"
 BIN_DIR="$HOME/.local/bin"
 VERSION="latest"
