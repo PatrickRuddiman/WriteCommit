@@ -2,7 +2,7 @@
 # Usage: iex (irm https://raw.githubusercontent.com/PatrickRuddiman/Toolkit/main/Tools/Write-Commit/install-web.ps1)
 
 param(
-    [string]$InstallDir = "$env:LOCALAPPDATA\Programs\WriteCommit",
+     [string]$InstallDir = "$env:LOCALAPPDATA\Programs\WriteCommit",
     [string]$Version = "latest"
 )
 

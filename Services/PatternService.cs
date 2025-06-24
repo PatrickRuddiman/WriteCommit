@@ -22,7 +22,9 @@ public class PatternService
             {
                 Console.WriteLine("Patterns directory not found.");
             }
-            throw new DirectoryNotFoundException($"Patterns directory not found: {_patternsDirectory}");
+            throw new DirectoryNotFoundException(
+                $"Patterns directory not found: {_patternsDirectory}"
+            );
         }
 
         var patternDirectories = Directory.GetDirectories(_patternsDirectory);
@@ -40,7 +42,9 @@ public class PatternService
 
             if (!File.Exists(systemFile))
             {
-                throw new FileNotFoundException($"Pattern '{patternName}' is missing system.md file");
+                throw new FileNotFoundException(
+                    $"Pattern '{patternName}' is missing system.md file"
+                );
             }
 
             if (_verbose)

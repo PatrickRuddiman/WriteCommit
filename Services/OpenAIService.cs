@@ -1,7 +1,7 @@
 using System.Text;
+using OpenAI.Chat;
 using WriteCommit.Constants;
 using WriteCommit.Models;
-using OpenAI.Chat;
 
 namespace WriteCommit.Services;
 
@@ -155,7 +155,7 @@ public class OpenAIService
         var messages = new List<ChatMessage>
         {
             new SystemChatMessage(systemPrompt),
-            new UserChatMessage(chunk.Content)
+            new UserChatMessage(chunk.Content),
         };
 
         // Create chat completion options
@@ -164,7 +164,7 @@ public class OpenAIService
             Temperature = ConvertTemperature(temperature),
             TopP = ConvertTopP(topP),
             PresencePenalty = ConvertPenalty(presence),
-            FrequencyPenalty = ConvertPenalty(frequency)
+            FrequencyPenalty = ConvertPenalty(frequency),
         };
 
         if (verbose)
@@ -197,7 +197,10 @@ public class OpenAIService
             {
                 Console.WriteLine($"Error calling OpenAI API: {ex.Message}");
             }
-            throw new InvalidOperationException($"Failed to generate commit message: {ex.Message}", ex);
+            throw new InvalidOperationException(
+                $"Failed to generate commit message: {ex.Message}",
+                ex
+            );
         }
     }
 
@@ -231,7 +234,7 @@ public class OpenAIService
         var messages = new List<ChatMessage>
         {
             new SystemChatMessage(systemPrompt),
-            new UserChatMessage(string.Join("\n\n", chunkMessages))
+            new UserChatMessage(string.Join("\n\n", chunkMessages)),
         };
 
         // Create chat completion options
@@ -240,7 +243,7 @@ public class OpenAIService
             Temperature = ConvertTemperature(temperature),
             TopP = ConvertTopP(topP),
             PresencePenalty = ConvertPenalty(presence),
-            FrequencyPenalty = ConvertPenalty(frequency)
+            FrequencyPenalty = ConvertPenalty(frequency),
         };
 
         try
