@@ -2,35 +2,40 @@
 # Usage: iex (irm https://raw.githubusercontent.com/PatrickRuddiman/Toolkit/main/Tools/Write-Commit/install-web.ps1)
 
 param(
-    [string]$InstallDir = "$env:USERPROFILE\.local\bin"
+    [string]$InstallDir = "$env:LOCALAPPDATA\Programs\WriteCommit",
+    [string]$Version = "latest"
 )
 
 $ErrorActionPreference = "Stop"
 
 # Configuration
 $Repo = "PatrickRuddiman/Toolkit"
-$ToolName = "WriteCommit"
-$Runtime = "win-x64"
+$ToolName = "writecommit"
+$Platform = "windows"
+$Arch = "x64"
+$BinDir = "$env:USERPROFILE\.local\bin"
 
-Write-Host "🔍 Installing WriteCommit for Windows ($Runtime)" -ForegroundColor Cyan
+Write-Host "🔍 Installing WriteCommit for Windows..." -ForegroundColor Cyan
 
 try {
-    # Get latest release info
-    Write-Host "📡 Fetching latest release information..." -ForegroundColor Yellow
-    $LatestRelease = Invoke-RestMethod -Uri "https://api.github.com/repos/$Repo/releases/latest"
-    $Version = $LatestRelease.tag_name
+    # Get version info
+    if ($Version -eq "latest") {
+        Write-Host "📡 Fetching latest release information..." -ForegroundColor Yellow
+        $LatestRelease = Invoke-RestMethod -Uri "https://api.github.com/repos/$Repo/releases/latest"
+        $Version = $LatestRelease.tag_name
 
-    if ([string]::IsNullOrEmpty($Version)) {
-        throw "Failed to get latest release version"
+        if ([string]::IsNullOrEmpty($Version)) {
+            throw "Failed to get latest release version"
+        }
     }
+    
+    Write-Host "📦 Version: $Version" -ForegroundColor Green
 
-    Write-Host "📦 Latest version: $Version" -ForegroundColor Green
-
-    # Construct download URL
-    $AssetName = "$ToolName-$Version-$Runtime.zip"
+    # Construct download URL - using correct naming pattern
+    $AssetName = "$ToolName-$Platform-$Arch-$Version.zip"
     $DownloadUrl = "https://github.com/$Repo/releases/download/$Version/$AssetName"
 
-    Write-Host "⬇️  Downloading $AssetName..." -ForegroundColor Yellow
+    Write-Host "⬇️  Downloading $AssetName from $DownloadUrl..." -ForegroundColor Yellow
 
     # Create temporary directory
     $TempDir = [System.IO.Path]::GetTempPath() + [System.Guid]::NewGuid().ToString()
@@ -45,39 +50,66 @@ try {
         throw "Failed to download $DownloadUrl. Make sure the release exists and contains the asset: $AssetName"
     }
 
-    # Extract the archive
-    Write-Host "📂 Extracting archive..." -ForegroundColor Yellow
-    $ExtractPath = Join-Path $TempDir "extracted"
-    Expand-Archive -Path $ZipPath -DestinationPath $ExtractPath -Force
-
-    # Create install directory if it doesn't exist
-    if (!(Test-Path $InstallDir)) {
-        Write-Host "📁 Creating install directory: $InstallDir" -ForegroundColor Yellow
-        New-Item -ItemType Directory -Path $InstallDir -Force | Out-Null
+    # Remove old installation if exists
+    if (Test-Path $InstallDir) {
+        Write-Host "📦 Removing previous installation..." -ForegroundColor Yellow
+        Remove-Item $InstallDir -Recurse -Force
     }
 
-    # Install the binary
-    Write-Host "📥 Installing $ToolName to $InstallDir..." -ForegroundColor Yellow
-    $ExePath = Join-Path $ExtractPath "$ToolName.exe"
-    $TargetPath = Join-Path $InstallDir "$ToolName.exe"
-    Copy-Item $ExePath $TargetPath -Force
+    # Create install directory
+    Write-Host "📁 Creating install directory: $InstallDir" -ForegroundColor Yellow
+    New-Item -ItemType Directory -Path $InstallDir -Force | Out-Null
 
-    Write-Host "✅ $ToolName $Version installed successfully!" -ForegroundColor Green
+    # Extract the entire archive to preserve dependencies
+    Write-Host "📂 Extracting archive to $InstallDir..." -ForegroundColor Yellow
+    Expand-Archive -Path $ZipPath -DestinationPath $InstallDir -Force
+
+    # Create bin directory if it doesn't exist
+    if (!(Test-Path $BinDir)) {
+        Write-Host "📁 Creating bin directory: $BinDir" -ForegroundColor Yellow
+        New-Item -ItemType Directory -Path $BinDir -Force | Out-Null
+    }
+
+    # Create a batch file wrapper in the bin directory
+    Write-Host "📥 Creating wrapper script in $BinDir..." -ForegroundColor Yellow
+    $WrapperPath = Join-Path $BinDir "WriteCommit.cmd"
+    $WrapperContent = @"
+@echo off
+"$InstallDir\WriteCommit.exe" %*
+"@
+    Set-Content -Path $WrapperPath -Value $WrapperContent -Encoding ASCII
+
+    # Update PATH - Session
+    $currentPath = [Environment]::GetEnvironmentVariable("PATH", "Process")
+    if (-not $currentPath.Contains($BinDir)) {
+        Write-Host "🔄 Adding $BinDir to current session PATH..." -ForegroundColor Yellow
+        $env:PATH = "$BinDir;$env:PATH"
+    }
+
+    # Update PATH - User (permanent)
+    $persistentPath = [Environment]::GetEnvironmentVariable("PATH", "User")
+    if (-not $persistentPath.Contains($BinDir)) {
+        Write-Host "🔄 Adding $BinDir to user PATH permanently..." -ForegroundColor Yellow
+        [Environment]::SetEnvironmentVariable(
+            "PATH", 
+            "$BinDir;$persistentPath", 
+            "User"
+        )
+    }
+
+    Write-Host "✅ WriteCommit $Version installed successfully!" -ForegroundColor Green
     Write-Host ""
-    Write-Host "📝 Note: Make sure $InstallDir is in your PATH environment variable." -ForegroundColor Yellow
-    Write-Host "   You can add it by running:" -ForegroundColor Gray
-    Write-Host "   `$env:PATH += `";$InstallDir`"" -ForegroundColor Gray
-    Write-Host ""
+    Write-Host "📂 Installation directory: $InstallDir" -ForegroundColor White
     Write-Host "🚀 Example usage:" -ForegroundColor White
     Write-Host "   git add ." -ForegroundColor Gray
-    Write-Host "   $ToolName" -ForegroundColor Gray
-    Write-Host "   $ToolName --dry-run" -ForegroundColor Gray
-    Write-Host "   $ToolName --verbose" -ForegroundColor Gray
+    Write-Host "   WriteCommit" -ForegroundColor Gray
+    Write-Host "   WriteCommit --dry-run" -ForegroundColor Gray
+    Write-Host "   WriteCommit --verbose" -ForegroundColor Gray
 
     # Check if binary is in PATH
     $InPath = $false
     try {
-        Get-Command $ToolName -ErrorAction Stop | Out-Null
+        Get-Command WriteCommit -ErrorAction Stop | Out-Null
         $InPath = $true
     }
     catch {
@@ -86,12 +118,11 @@ try {
 
     if ($InPath) {
         Write-Host ""
-        Write-Host "🎉 $ToolName is ready to use!" -ForegroundColor Green
+        Write-Host "🎉 WriteCommit is ready to use!" -ForegroundColor Green
     }
     else {
         Write-Host ""
-        Write-Host "⚠️  $ToolName is not in your PATH. Restart your shell or run:" -ForegroundColor Yellow
-        Write-Host "   `$env:PATH += `";$InstallDir`"" -ForegroundColor Gray
+        Write-Host "⚠️  You may need to restart your terminal for PATH changes to take effect." -ForegroundColor Yellow
     }
 }
 catch {
