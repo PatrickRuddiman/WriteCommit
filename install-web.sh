@@ -120,10 +120,10 @@ fi
 
 # Create a wrapper script in the bin directory
 echo "📥 Creating wrapper script in $BIN_DIR..."
-WRAPPER_PATH="$BIN_DIR/WriteCommit"
+WRAPPER_PATH="$BIN_DIR/$TOOL_NAME"
 cat > "$WRAPPER_PATH" << EOF
 #!/bin/bash
-exec "$INSTALL_DIR/WriteCommit" "\$@"
+exec "$INSTALL_DIR/$TOOL_NAME" "\$@"
 EOF
 chmod +x "$WRAPPER_PATH"
 
