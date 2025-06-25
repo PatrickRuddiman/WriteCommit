@@ -1,6 +1,6 @@
 # WriteCommit
 
-A cross-platform .NET tool that generates AI-powered commit messages using [fabric](https://github.com/danielmiessler/fabric).
+A cross-platform .NET tool that generates AI-powered commit messages using OpenAI's GPT models.
 
 ## ✨ Features
 
@@ -9,14 +9,15 @@ A cross-platform .NET tool that generates AI-powered commit messages using [fabr
 - 🎛️ **Highly configurable** - Adjust AI parameters and patterns to your preference
 - 🧪 **Dry-run mode** - Preview generated messages without committing
 - 📝 **Verbose output** - Detailed logging for debugging and transparency
-- ⚡ **Fast and lightweight** - Quick generation with minimal dependencies
+- ⚡ **Fast and lightweight** - Direct OpenAI API integration for quick responses
+- 📋 **Smart chunking** - Handles large diffs by intelligently splitting them into semantic chunks
 
 ## 🚀 Quick Start
 
 ### Prerequisites
 
 - [.NET 8.0 or later](https://dotnet.microsoft.com/download)
-- [fabric](https://github.com/danielmiessler/fabric) installed and configured
+- OpenAI API key (either set as `OPENAI_API_KEY` environment variable or via `--setup`)
 - Git repository with staged changes
 
 ### Installation
@@ -97,21 +98,51 @@ write-commit --dry-run --verbose --temperature 0.5 --reinstall-patterns
 |--------|---------|-------------|
 | `--dry-run` | `false` | Generate message without committing |
 | `--verbose` | `false` | Show detailed output |
-| `--pattern` | `write_commit_message` | Fabric pattern to use |
+| `--pattern` | `write_commit_message` | Pattern to use for message generation |
 | `--temperature` | `1` | AI creativity level (0-2) |
 | `--topp` | `1` | Nucleus sampling parameter (0-1) |
-| `--model` | `gpt-4o` | AI model to use |
+| `--model` | `gpt-4o-mini` | OpenAI model to use |
 | `--presence` | `0` | Presence penalty (-2 to 2) |
 | `--frequency` | `0` | Frequency penalty (-2 to 2) |
 | `--reinstall-patterns` | `false` | Force reinstallation of all patterns |
+| `--setup` | `false` | Configure OpenAI API key |
 
 ## 🔧 How It Works
 
-1. **Installs patterns** - Automatically installs/updates fabric patterns on first run
-2. **Validates environment** - Checks for git repository and fabric installation
-3. **Analyzes changes** - Processes your staged git diff using semantic chunking
-4. **Generates message** - Uses fabric AI to create meaningful commit message
-5. **Commits changes** - Applies the generated message (unless `--dry-run`)
+1. **Validates environment** - Checks for git repository and OpenAI API key
+2. **Analyzes changes** - Processes your staged git diff using semantic chunking
+3. **Generates message** - Uses OpenAI API to create meaningful commit message
+4. **Commits changes** - Applies the generated message (unless `--dry-run`)
+
+## 🔑 Configuration
+
+### Setting up OpenAI API Key
+
+**Option 1: Using the Setup Command (Recommended)**
+
+```bash
+# Run the setup wizard
+write-commit --setup
+```
+
+This will prompt you to enter your API key and securely save it to `~/.writecommit/config.json`.
+
+**Option 2: Using Environment Variables**
+
+```bash
+# Linux/macOS
+export OPENAI_API_KEY="your-api-key-here"
+
+# Windows (PowerShell)
+$env:OPENAI_API_KEY="your-api-key-here"
+
+# Windows (Command Prompt)
+set OPENAI_API_KEY=your-api-key-here
+```
+
+For persistent configuration, add the export to your shell profile (`~/.bashrc`, `~/.zshrc`, etc.) or Windows environment variables.
+
+> Note: The environment variable takes precedence over the configuration file if both are set.
 
 ## 🛠️ Development
 
@@ -136,7 +167,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 🙏 Acknowledgments
 
-- [fabric](https://github.com/danielmiessler/fabric) - The AI-powered prompt and pattern framework
+- [OpenAI](https://openai.com/) - For providing the GPT models
 - [System.CommandLine](https://github.com/dotnet/command-line-api) - Modern CLI framework for .NET
 
 ---

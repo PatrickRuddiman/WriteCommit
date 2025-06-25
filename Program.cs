@@ -16,32 +16,33 @@ class Program
         var verboseOption = new Option<bool>("--verbose", "Show detailed output");
         var patternOption = new Option<string>(
             "--pattern",
-            () => FabricPatterns.CommitPattern,
-            "Fabric pattern to use"
+            () => PatternNames.CommitPattern,
+            "Pattern to use for message generation"
         );
         var temperatureOption = new Option<int>(
             "--temperature",
             () => 1,
-            "Temperature setting for fabric (0-2)"
+            "Temperature setting for AI model (0-2)"
         );
-        var topPOption = new Option<int>("--topp", () => 1, "Top-p setting for fabric (0-1)");
-        var presenceOption = new Option<int>("--presence", () => 0, "Presence penalty for fabric");
+        var topPOption = new Option<int>("--topp", () => 1, "Top-p setting for AI model (0-1)");
+        var presenceOption = new Option<int>("--presence", () => 0, "Presence penalty for AI model");
         var frequencyOption = new Option<int>(
             "--frequency",
             () => 0,
-            "Frequency penalty for fabric"
+            "Frequency penalty for AI model"
         );
         var modelOption = new Option<string>(
             "--model",
             () => "gpt-4o-mini",
             "AI model to use (default: gpt-4o-mini)"
         );
-        var reinstallPatternsOption = new Option<bool>(
-            "--reinstall-patterns",
-            "Force reinstallation of all patterns"
+
+        var setupOption = new Option<bool>(
+            "--setup",
+            "Configure OpenAI API key"
         );
 
-        var rootCommand = new RootCommand("Generate AI-powered commit messages using fabric")
+        var rootCommand = new RootCommand("Generate AI-powered commit messages using OpenAI")
         {
             dryRunOption,
             verboseOption,
@@ -51,7 +52,7 @@ class Program
             presenceOption,
             frequencyOption,
             modelOption,
-            reinstallPatternsOption,
+            setupOption,
         };
 
         rootCommand.SetHandler(
@@ -68,12 +69,17 @@ class Program
             {
                 try
                 {
-                    // Check if patterns should be reinstalled
-                    bool reinstallPatterns = args.Contains("--reinstall-patterns");
+                    // Check if setup mode is requested
+                    bool setupMode = args.Contains("--setup");
+                    if (setupMode)
+                    {
+                        await RunSetupAsync(verbose);
+                        return;
+                    }
 
                     // Ensure patterns are installed before proceeding
                     var patternService = new PatternService(verbose);
-                    await patternService.EnsurePatternsInstalledAsync(reinstallPatterns);
+                    await patternService.EnsurePatternsInstalledAsync();
 
                     await GenerateCommitMessage(
                         dryRun,
@@ -117,24 +123,21 @@ class Program
     )
     {
         var gitService = new GitService();
-        var fabricService = new FabricService();
 
-        // Ensure the pattern is installed in fabric patterns directory
-        try
+        // Get OpenAI API key
+        var configService = new ConfigurationService();
+        var apiKey = await configService.GetOpenAiApiKeyAsync();
+
+        if (string.IsNullOrEmpty(apiKey))
         {
-            await PatternInstaller.EnsurePatternInstalledAsync(pattern, verbose);
+            throw new InvalidOperationException(
+                "OpenAI API key not found. Please run 'WriteCommit --setup' to configure your API key " +
+                "or set the OPENAI_API_KEY environment variable."
+            );
         }
-        catch (Exception ex)
-        {
-            if (verbose)
-            {
-                Console.WriteLine($"Warning: Could not install pattern '{pattern}': {ex.Message}");
-                Console.WriteLine(
-                    "Proceeding with assumption that pattern is already available in fabric..."
-                );
-            }
-            // Continue anyway - the pattern might already be available in fabric
-        }
+
+        // Create OpenAI service with the API key
+        var openAiService = new OpenAIService(apiKey);
 
         // Check if we're in a git repository
         if (!Directory.Exists(".git") && !await gitService.IsInGitRepositoryAsync())
@@ -178,8 +181,8 @@ class Program
             );
         }
 
-        // Generate commit message using fabric with chunking support
-        var commitMessage = await fabricService.GenerateCommitMessageAsync(
+        // Generate commit message using OpenAI with chunking support
+        var commitMessage = await openAiService.GenerateCommitMessageAsync(
             chunks,
             pattern,
             temperature,
@@ -193,7 +196,7 @@ class Program
         if (string.IsNullOrWhiteSpace(commitMessage))
         {
             throw new InvalidOperationException(
-                "Failed to generate commit message. Please check that fabric is installed and accessible."
+                "Failed to generate commit message. Please ensure your OpenAI API key is valid."
             );
         }
 
@@ -210,5 +213,27 @@ class Program
 
         // Commit the changes
         await gitService.CommitChangesAsync(commitMessage, verbose);
+    }
+
+    /// <summary>
+    /// Runs the setup process to configure the OpenAI API key
+    /// </summary>
+    static async Task RunSetupAsync(bool verbose)
+    {
+        var configService = new ConfigurationService();
+        bool success = await configService.SetupApiKeyAsync(verbose);
+
+        if (success)
+        {
+            Console.WriteLine();
+            Console.WriteLine("✅ Setup completed successfully.");
+            Console.WriteLine("You can now use WriteCommit to generate commit messages.");
+        }
+        else
+        {
+            Console.WriteLine();
+            Console.WriteLine("❌ Setup failed.");
+            Console.WriteLine("You can try again or set the OPENAI_API_KEY environment variable manually.");
+        }
     }
 }
