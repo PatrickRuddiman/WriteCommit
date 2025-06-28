@@ -77,19 +77,19 @@ WriteCommit
 
 ```bash
 # Preview message without committing
-write-commit --dry-run
+WriteCommit --dry-run
 
 # Detailed output for debugging
-write-commit --verbose
+WriteCommit --verbose
 
 # Custom AI parameters
-write-commit --temperature 0.7 --topp 0.9 --pattern custom_pattern
+WriteCommit --temperature 0.7 --topp 0.9 --pattern custom_pattern
 
 # Force reinstall all patterns
-write-commit --reinstall-patterns
+WriteCommit --reinstall-patterns
 
 # Combine multiple options
-write-commit --dry-run --verbose --temperature 0.5 --reinstall-patterns
+WriteCommit --dry-run --verbose --temperature 0.5 --reinstall-patterns
 ```
 
 ## ⚙️ Configuration Options
@@ -122,7 +122,7 @@ write-commit --dry-run --verbose --temperature 0.5 --reinstall-patterns
 
 ```bash
 # Run the setup wizard
-write-commit --setup
+WriteCommit --setup
 ```
 
 This will prompt you to enter your API key and securely save it to `~/.writecommit/config.json`.
