@@ -1,0 +1,65 @@
+{
+  "name": "writecommit-vscode",
+  "displayName": "Write Commit",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "description": "Generate commit messages using WriteCommit CLI",
+  "main": "./out/extension.js",
+  "scripts": {
+    "compile": "tsc -p ./",
+    "build": "npm run compile",
+    "test": "npm run compile"
+  },
+  "keywords": [
+    "git",
+    "commit",
+    "ai"
+  ],
+  "categories": [
+    "Source Control"
+  ],
+  "activationEvents": [
+    "onCommand:writecommit.generateMessage"
+  ],
+  "contributes": {
+    "commands": [
+      {
+        "command": "writecommit.generateMessage",
+        "title": "Generate Commit Message",
+        "icon": "$(sparkle-filled)"
+      }
+    ],
+    "menus": {
+      "scm/title": [
+        {
+          "command": "writecommit.generateMessage",
+          "group": "navigation"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "WriteCommit",
+      "properties": {
+        "writecommit.openAIApiKey": {
+          "type": "string",
+          "default": "",
+          "description": "OpenAI API key for WriteCommit"
+        },
+        "writecommit.executablePath": {
+          "type": "string",
+          "default": "WriteCommit",
+          "description": "Path to the WriteCommit executable"
+        }
+      }
+    }
+  },
+  "dependencies": {
+    "@types/node": "^24.0.7"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.101.0",
+    "typescript": "^5.8.3"
+  }
+}
