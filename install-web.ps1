@@ -1,5 +1,5 @@
 # Web installer for WriteCommit tool (Windows)
-# Usage: iex (irm https://raw.githubusercontent.com/PatrickRuddiman/Toolkit/main/Tools/Write-Commit/install-web.ps1)
+# Usage: iex (irm https://raw.githubusercontent.com/PatrickRuddiman/WriteCommit/main/install-web.ps1)
 
 param(
      [string]$InstallDir = "$env:LOCALAPPDATA\Programs\WriteCommit",
@@ -9,7 +9,7 @@ param(
 $ErrorActionPreference = "Stop"
 
 # Configuration
-$Repo = "PatrickRuddiman/Toolkit"
+$Repo = "PatrickRuddiman/WriteCommit"
 $ToolName = "writecommit"
 $Platform = "windows"
 $Arch = "x64"
