@@ -1,13 +1,16 @@
 #!/bin/bash
 # Universal web installer for WriteCommit tool
-# Usage: curl -sSL https://raw.githubusercontent.com/PatrickRuddiman/Toolkit/main/Tools/Write-Commit/install-universal.sh | bash
-# Or with arch override: curl -sSL https://raw.githubusercontent.com/PatrickRuddiman/Toolkit/main/Tools/Write-Commit/install-universal.sh | bash -s -- --arch linux-arm64
+# Usage: curl -sSL https://raw.githubusercontent.com/PatrickRuddiman/WriteCommit/main/install-universal.sh | bash
+# Or with arch override: curl -sSL https://raw.githubusercontent.com/PatrickRuddiman/WriteCommit/main/install-universal.sh | bash -s -- --arch linux-arm64
 
 set -e
 
 # Configuration
-REPO="PatrickRuddiman/Toolkit"
-TOOL_NAME="WriteCommit"
+REPO="PatrickRuddiman/WriteCommit"
+# Binary name inside the archive
+BINARY_NAME="WriteCommit"
+# Asset prefix is lowercase
+TOOL_ASSET="writecommit"
 INSTALL_DIR="$HOME/.local/bin"
 
 # Parse command line arguments
@@ -70,7 +73,7 @@ else
         *)
             echo "❌ Unsupported OS: $OS"
             echo "This script is for Linux and macOS only. For Windows, use:"
-            echo "iex (irm https://raw.githubusercontent.com/PatrickRuddiman/Toolkit/main/Tools/Write-Commit/install-web.ps1)"
+            echo "iex (irm https://raw.githubusercontent.com/PatrickRuddiman/WriteCommit/main/install-web.ps1)"
             exit 1
             ;;
     esac
@@ -91,13 +94,17 @@ fi
 echo "📦 Latest version: $VERSION"
 
 # Construct download URL
-ASSET_NAME="${TOOL_NAME}-${VERSION}-${RUNTIME}.tar.gz"
+ASSET_NAME="${TOOL_ASSET}-${RUNTIME}-${VERSION}.tar.gz"
 DOWNLOAD_URL="https://github.com/$REPO/releases/download/$VERSION/$ASSET_NAME"
 
 echo "⬇️  Downloading $ASSET_NAME..."
 
-# Create temporary directory
+# Create temporary directory and ensure cleanup
 TEMP_DIR=$(mktemp -d)
+cleanup() {
+    rm -rf "$TEMP_DIR"
+}
+trap cleanup EXIT
 cd "$TEMP_DIR"
 
 # Download the release
@@ -121,15 +128,15 @@ if [ ! -d "$INSTALL_DIR" ]; then
 fi
 
 # Install the binary
-echo "📥 Installing $TOOL_NAME to $INSTALL_DIR..."
-cp "$TOOL_NAME" "$INSTALL_DIR/"
-chmod +x "$INSTALL_DIR/$TOOL_NAME"
+echo "📥 Installing $BINARY_NAME to $INSTALL_DIR..."
+cp "$BINARY_NAME" "$INSTALL_DIR/"
+chmod +x "$INSTALL_DIR/$BINARY_NAME"
 
 # Cleanup
 cd - > /dev/null
 rm -rf "$TEMP_DIR"
 
-echo "✅ $TOOL_NAME $VERSION ($RUNTIME) installed successfully!"
+echo "✅ $BINARY_NAME $VERSION ($RUNTIME) installed successfully!"
 echo ""
 echo "📝 Note: Make sure $INSTALL_DIR is in your PATH."
 echo "   Add this line to your ~/.bashrc or ~/.zshrc:"
@@ -137,16 +144,16 @@ echo "   export PATH=\"$INSTALL_DIR:\$PATH\""
 echo ""
 echo "🚀 Example usage:"
 echo "   git add ."
-echo "   $TOOL_NAME"
-echo "   $TOOL_NAME --dry-run"
-echo "   $TOOL_NAME --verbose"
+echo "   $BINARY_NAME"
+echo "   $BINARY_NAME --dry-run"
+echo "   $BINARY_NAME --verbose"
 
 # Check if binary is in PATH
-if command -v "$TOOL_NAME" >/dev/null 2>&1; then
+if command -v "$BINARY_NAME" >/dev/null 2>&1; then
     echo ""
-    echo "🎉 $TOOL_NAME is ready to use!"
+    echo "🎉 $BINARY_NAME is ready to use!"
 else
     echo ""
-    echo "⚠️  $TOOL_NAME is not in your PATH. Restart your shell or run:"
+    echo "⚠️  $BINARY_NAME is not in your PATH. Restart your shell or run:"
     echo "   export PATH=\"$INSTALL_DIR:\$PATH\""
 fi
