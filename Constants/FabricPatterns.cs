@@ -11,5 +11,10 @@ namespace WriteCommit.Constants
         /// Default pattern used for generating commit messages
         /// </summary>
         public const string CommitPattern = "write_commit_message";
+
+        /// <summary>
+        /// Pattern used when context overflow requires extra summarization
+        /// </summary>
+        public const string BrevityPattern = "brief_chunk_summary";
     }
 }

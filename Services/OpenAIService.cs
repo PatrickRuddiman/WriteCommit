@@ -229,7 +229,7 @@ public class OpenAIService
         }
 
         var combinedContent = string.Join("\n\n", chunkMessages);
-        var estimatedTokens = EstimateTokenCount(systemPrompt) + EstimateTokenCount(combinedContent);
+        var estimatedTokens = TokenHelper.EstimateTokens(systemPrompt, model) + TokenHelper.EstimateTokens(combinedContent, model);
 
         if (estimatedTokens > MaxContextTokens && chunkMessages.Count > 1)
         {
@@ -240,17 +240,17 @@ public class OpenAIService
 
             var groupedSummaries = new List<string>();
             var currentGroup = new List<string>();
-            var currentTokens = EstimateTokenCount(systemPrompt);
+            var currentTokens = TokenHelper.EstimateTokens(systemPrompt, model);
 
             foreach (var msg in chunkMessages)
             {
-                var msgTokens = EstimateTokenCount(msg);
+                var msgTokens = TokenHelper.EstimateTokens(msg, model);
                 if (currentTokens + msgTokens > MaxContextTokens / 2 && currentGroup.Count > 0)
                 {
-                    var summary = await CombineChunkMessagesAsync(currentGroup, pattern, temperature, topP, presence, frequency, model, verbose);
+                    var summary = await CombineChunkMessagesAsync(currentGroup, PatternNames.BrevityPattern, temperature, topP, presence, frequency, model, verbose);
                     groupedSummaries.Add(summary);
                     currentGroup.Clear();
-                    currentTokens = EstimateTokenCount(systemPrompt);
+                    currentTokens = TokenHelper.EstimateTokens(systemPrompt, model);
                 }
 
                 currentGroup.Add(msg);
@@ -259,11 +259,11 @@ public class OpenAIService
 
             if (currentGroup.Count > 0)
             {
-                var summary = await CombineChunkMessagesAsync(currentGroup, pattern, temperature, topP, presence, frequency, model, verbose);
+                var summary = await CombineChunkMessagesAsync(currentGroup, PatternNames.BrevityPattern, temperature, topP, presence, frequency, model, verbose);
                 groupedSummaries.Add(summary);
             }
 
-            return await CombineChunkMessagesAsync(groupedSummaries, pattern, temperature, topP, presence, frequency, model, verbose);
+            return await CombineChunkMessagesAsync(groupedSummaries, PatternNames.BrevityPattern, temperature, topP, presence, frequency, model, verbose);
         }
 
         // Create a client for this specific model
@@ -353,11 +353,4 @@ public class OpenAIService
         return Math.Clamp((float)penalty, -2f, 2f);
     }
 
-    /// <summary>
-    /// Estimates token count using a rough 4 chars per token heuristic
-    /// </summary>
-    private int EstimateTokenCount(string text)
-    {
-        return Math.Max(1, text.Length / 4);
-    }
 }
