@@ -9,6 +9,7 @@ public class OpenAIService
 {
     private readonly string _apiKey;
     private readonly string _patternsDirectory;
+    private const int MaxContextTokens = 128000;
 
     public OpenAIService(string apiKey)
     {
@@ -227,6 +228,44 @@ public class OpenAIService
             throw new InvalidOperationException($"Failed to load pattern: {pattern}");
         }
 
+        var combinedContent = string.Join("\n\n", chunkMessages);
+        var estimatedTokens = TokenHelper.EstimateTokens(systemPrompt, model) + TokenHelper.EstimateTokens(combinedContent, model);
+
+        if (estimatedTokens > MaxContextTokens && chunkMessages.Count > 1)
+        {
+            if (verbose)
+            {
+                Console.WriteLine("Context length exceeded, re-chunking summaries...");
+            }
+
+            var groupedSummaries = new List<string>();
+            var currentGroup = new List<string>();
+            var currentTokens = TokenHelper.EstimateTokens(systemPrompt, model);
+
+            foreach (var msg in chunkMessages)
+            {
+                var msgTokens = TokenHelper.EstimateTokens(msg, model);
+                if (currentTokens + msgTokens > MaxContextTokens / 2 && currentGroup.Count > 0)
+                {
+                    var summary = await CombineChunkMessagesAsync(currentGroup, PatternNames.BrevityPattern, temperature, topP, presence, frequency, model, verbose);
+                    groupedSummaries.Add(summary);
+                    currentGroup.Clear();
+                    currentTokens = TokenHelper.EstimateTokens(systemPrompt, model);
+                }
+
+                currentGroup.Add(msg);
+                currentTokens += msgTokens;
+            }
+
+            if (currentGroup.Count > 0)
+            {
+                var summary = await CombineChunkMessagesAsync(currentGroup, PatternNames.BrevityPattern, temperature, topP, presence, frequency, model, verbose);
+                groupedSummaries.Add(summary);
+            }
+
+            return await CombineChunkMessagesAsync(groupedSummaries, PatternNames.BrevityPattern, temperature, topP, presence, frequency, model, verbose);
+        }
+
         // Create a client for this specific model
         var chatClient = new ChatClient(model, _apiKey);
 
@@ -234,7 +273,7 @@ public class OpenAIService
         var messages = new List<ChatMessage>
         {
             new SystemChatMessage(systemPrompt),
-            new UserChatMessage(string.Join("\n\n", chunkMessages)),
+            new UserChatMessage(combinedContent),
         };
 
         // Create chat completion options
@@ -313,4 +352,5 @@ public class OpenAIService
         // OpenAI uses -2 to 2 for penalties
         return Math.Clamp((float)penalty, -2f, 2f);
     }
+
 }

@@ -2,6 +2,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using Microsoft.Extensions.Logging;
 using WriteCommit.Models;
+using WriteCommit.Services;
 
 namespace WriteCommit.Services;
 
@@ -311,8 +312,7 @@ public class SemanticCoherenceAnalyzer
 
     private int EstimateTokenCount(string text)
     {
-        // Rough estimation: ~4 characters per token for code
-        // This is conservative to ensure we don't exceed LLM limits
-        return Math.Max(1, text.Length / 4);
+        // Use token encoder for more accurate results
+        return TokenHelper.EstimateTokens(text, "gpt-4o-mini");
     }
 }

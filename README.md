@@ -85,6 +85,9 @@ write-commit --verbose
 # Custom AI parameters
 write-commit --temperature 0.7 --topp 0.9 --pattern custom_pattern
 
+# Built-in brevity pattern for overflowing contexts
+write-commit --pattern brief_chunk_summary
+
 # Force reinstall all patterns
 write-commit --reinstall-patterns
 
