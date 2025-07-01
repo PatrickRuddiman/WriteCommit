@@ -1,5 +1,6 @@
 using System.Text;
 using OpenAI.Chat;
+using System.ClientModel;
 using WriteCommit.Constants;
 using WriteCommit.Models;
 
@@ -8,10 +9,11 @@ namespace WriteCommit.Services;
 public class OpenAIService
 {
     private readonly string _apiKey;
+    private readonly string _endpoint;
     private readonly string _patternsDirectory;
     private const int MaxContextTokens = 128000;
 
-    public OpenAIService(string apiKey)
+    public OpenAIService(string apiKey, string? endpoint = null)
     {
         if (string.IsNullOrEmpty(apiKey))
         {
@@ -19,6 +21,9 @@ public class OpenAIService
         }
 
         _apiKey = apiKey;
+        _endpoint = string.IsNullOrWhiteSpace(endpoint)
+            ? "https://api.openai.com/v1"
+            : endpoint;
         _patternsDirectory = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "patterns");
     }
 
@@ -150,7 +155,11 @@ public class OpenAIService
         }
 
         // Create a client for this specific model
-        var chatClient = new ChatClient(model, _apiKey);
+        var clientOptions = new OpenAI.OpenAIClientOptions
+        {
+            Endpoint = new Uri(_endpoint)
+        };
+        var chatClient = new ChatClient(model, new ApiKeyCredential(_apiKey), clientOptions);
 
         // Create the chat messages
         var messages = new List<ChatMessage>
@@ -267,7 +276,11 @@ public class OpenAIService
         }
 
         // Create a client for this specific model
-        var chatClient = new ChatClient(model, _apiKey);
+        var clientOptions = new OpenAI.OpenAIClientOptions
+        {
+            Endpoint = new Uri(_endpoint)
+        };
+        var chatClient = new ChatClient(model, new ApiKeyCredential(_apiKey), clientOptions);
 
         // Create the chat messages
         var messages = new List<ChatMessage>

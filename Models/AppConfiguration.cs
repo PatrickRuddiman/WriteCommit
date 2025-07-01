@@ -10,6 +10,9 @@ public class AppConfiguration
     [JsonPropertyName("default_model")]
     public string? DefaultModel { get; set; }
 
+    [JsonPropertyName("openai_endpoint")]
+    public string? OpenAiEndpoint { get; set; }
+
     [JsonPropertyName("default_temperature")]
     public int? DefaultTemperature { get; set; }
 
