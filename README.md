@@ -160,11 +160,6 @@ dotnet run -- --help
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 🙏 Acknowledgments
-
-- [OpenAI](https://openai.com/) - For providing the GPT models
-- [System.CommandLine](https://github.com/dotnet/command-line-api) - Modern CLI framework for .NET
-
 ---
 
 **Made with ❤️ for developers who want better commit messages**
