@@ -156,7 +156,8 @@ class Program
             {
                 Console.WriteLine("Small diff detected, gathering additional context...");
             }
-            stagedChanges = await gitService.GetStagedChangesWithContextAsync(10, verbose);
+            const int DefaultContextLines = 10;
+            stagedChanges = await gitService.GetStagedChangesWithContextAsync(DefaultContextLines, verbose);
         }
         if (string.IsNullOrWhiteSpace(stagedChanges))
         {
