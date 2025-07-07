@@ -140,7 +140,30 @@ class Program
         }
 
         // Get staged changes
-        var stagedChanges = await gitService.GetStagedChangesAsync();
+        var stagedChanges = await gitService.GetStagedChangesAsync(verbose);
+
+        // If the diff is very small, grab a few extra lines of context
+        var fileCount = System.Text.RegularExpressions.Regex.Matches(
+            stagedChanges,
+            "^diff --git",
+            System.Text.RegularExpressions.RegexOptions.Multiline
+        ).Count;
+        var lineCount = stagedChanges.Split('\n').Length;
+
+        if (
+            fileCount <= DiffContextDefaults.SmallDiffFileThreshold
+            && lineCount < DiffContextDefaults.SmallDiffLineThreshold
+        )
+        {
+            if (verbose)
+            {
+                Console.WriteLine("Small diff detected, gathering additional context...");
+            }
+            stagedChanges = await gitService.GetStagedChangesWithContextAsync(
+                DiffContextDefaults.ExtraContextLines,
+                verbose
+            );
+        }
         if (string.IsNullOrWhiteSpace(stagedChanges))
         {
             Console.WriteLine(

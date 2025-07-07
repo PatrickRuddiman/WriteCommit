@@ -11,6 +11,7 @@ A cross-platform .NET tool that generates AI-powered commit messages using OpenA
 - 📝 **Verbose output** - Detailed logging for debugging and transparency
 - ⚡ **Fast and lightweight** - Direct OpenAI API integration for quick responses
 - 📋 **Smart chunking** - Handles large diffs by intelligently splitting them into semantic chunks
+- 🔍 **Context-aware** - Adds surrounding code lines when diffs are very small for better summaries
 
 ## 🚀 Quick Start
 

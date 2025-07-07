@@ -18,12 +18,23 @@ public class GitService
         }
     }
 
-    public async Task<string> GetStagedChangesAsync()
+    public async Task<string> GetStagedChangesAsync(bool verbose = false)
     {
-        var result = await RunCommandAsync("git", "--no-pager diff --staged", false);
+        var result = await RunCommandAsync("git", "--no-pager diff --staged", verbose);
         if (result.ExitCode != 0)
         {
             throw new InvalidOperationException($"Failed to get staged changes: {result.Error}");
+        }
+        return result.Output;
+    }
+
+    public async Task<string> GetStagedChangesWithContextAsync(int contextLines, bool verbose = false)
+    {
+        var args = $"--no-pager diff --staged --unified={contextLines}";
+        var result = await RunCommandAsync("git", args, verbose);
+        if (result.ExitCode != 0)
+        {
+            throw new InvalidOperationException($"Failed to get staged changes with context: {result.Error}");
         }
         return result.Output;
     }
