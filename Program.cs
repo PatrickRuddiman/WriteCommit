@@ -150,7 +150,7 @@ class Program
         ).Count;
         var lineCount = stagedChanges.Split('\n').Length;
 
-        if (fileCount <= 2 && lineCount < 20)
+        if (fileCount <= SMALL_DIFF_FILE_THRESHOLD && lineCount < SMALL_DIFF_LINE_THRESHOLD)
         {
             if (verbose)
             {
