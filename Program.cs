@@ -150,14 +150,19 @@ class Program
         ).Count;
         var lineCount = stagedChanges.Split('\n').Length;
 
-        if (fileCount <= SMALL_DIFF_FILE_THRESHOLD && lineCount < SMALL_DIFF_LINE_THRESHOLD)
+        if (
+            fileCount <= DiffContextDefaults.SmallDiffFileThreshold
+            && lineCount < DiffContextDefaults.SmallDiffLineThreshold
+        )
         {
             if (verbose)
             {
                 Console.WriteLine("Small diff detected, gathering additional context...");
             }
-            const int DefaultContextLines = 10;
-            stagedChanges = await gitService.GetStagedChangesWithContextAsync(DefaultContextLines, verbose);
+            stagedChanges = await gitService.GetStagedChangesWithContextAsync(
+                DiffContextDefaults.ExtraContextLines,
+                verbose
+            );
         }
         if (string.IsNullOrWhiteSpace(stagedChanges))
         {
