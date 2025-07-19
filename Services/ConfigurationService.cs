@@ -135,13 +135,24 @@ public class ConfigurationService
         // Prompt for endpoint and model/deployment
         Console.Write(
             useAzure
-                ? "Azure endpoint (e.g. https://your-resource.openai.azure.com): "
+                ? "Azure endpoint (leave blank to use OpenAI): "
                 : "Endpoint (default: https://api.openai.com/v1): "
         );
         var endpointInput = Console.ReadLine()?.Trim();
-        var endpoint = string.IsNullOrWhiteSpace(endpointInput)
-            ? (useAzure ? "https://your-resource.openai.azure.com" : "https://api.openai.com/v1")
-            : endpointInput;
+        string endpoint;
+        if (string.IsNullOrWhiteSpace(endpointInput))
+        {
+            endpoint = "https://api.openai.com/v1";
+            // If no Azure endpoint provided, fall back to OpenAI
+            if (useAzure)
+            {
+                useAzure = false;
+            }
+        }
+        else
+        {
+            endpoint = endpointInput;
+        }
 
         Console.Write(
             useAzure

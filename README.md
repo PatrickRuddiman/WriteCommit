@@ -121,7 +121,7 @@ WriteCommit --dry-run --verbose --temperature 0.5
 WriteCommit --setup
 ```
 
-This will prompt you to enter your API key (if needed), choose between OpenAI or Azure OpenAI, specify the endpoint, and default model/deployment. The values are saved to `~/.writecommit/config.json`.
+This will prompt you to enter your API key (if needed), choose between OpenAI or Azure OpenAI, specify the endpoint, and default model/deployment. If you select Azure but leave the endpoint blank, WriteCommit will fall back to the standard OpenAI endpoint. The values are saved to `~/.writecommit/config.json`.
 
 **Option 2: Using Environment Variables**
 
