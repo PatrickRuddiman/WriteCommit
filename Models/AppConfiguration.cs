@@ -18,4 +18,7 @@ public class AppConfiguration
 
     [JsonPropertyName("default_topp")]
     public int? DefaultTopP { get; set; }
+
+    [JsonPropertyName("use_azure_openai")]
+    public bool UseAzureOpenAI { get; set; }
 }

@@ -33,10 +33,10 @@ class Program
 
         var setupOption = new Option<bool>(
             "--setup",
-            "Configure OpenAI API key"
+            "Configure OpenAI or Azure OpenAI settings"
         );
 
-        var rootCommand = new RootCommand("Generate AI-powered commit messages using OpenAI")
+        var rootCommand = new RootCommand("Generate AI-powered commit messages using OpenAI or Azure OpenAI")
         {
             dryRunOption,
             verboseOption,
@@ -129,7 +129,8 @@ class Program
         var endpoint = await configService.GetOpenAiEndpointAsync() ?? "https://api.openai.com/v1";
         var defaultModel = await configService.GetDefaultModelAsync() ?? "gpt-4o-mini";
 
-        var openAiService = new OpenAIService(apiKey, endpoint);
+        var useAzure = await configService.UseAzureOpenAIAsync();
+        var openAiService = new OpenAIService(apiKey, endpoint, useAzure);
 
         // Check if we're in a git repository
         if (!Directory.Exists(".git") && !await gitService.IsInGitRepositoryAsync())

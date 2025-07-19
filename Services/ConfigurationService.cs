@@ -1,5 +1,7 @@
 using System.Text.Json;
 using OpenAI.Chat;
+using Azure.AI.OpenAI;
+using System.ClientModel;
 using WriteCommit.Constants;
 using WriteCommit.Models;
 
@@ -95,6 +97,15 @@ public class ConfigurationService
     }
 
     /// <summary>
+    /// Returns true if configuration specifies Azure OpenAI usage
+    /// </summary>
+    public async Task<bool> UseAzureOpenAIAsync()
+    {
+        var config = await LoadConfigurationAsync();
+        return config?.UseAzureOpenAI ?? false;
+    }
+
+    /// <summary>
     /// Prompts user to enter and save their OpenAI API key
     /// </summary>
     public async Task<bool> SetupApiKeyAsync(bool verbose = false)
@@ -102,8 +113,8 @@ public class ConfigurationService
         Console.WriteLine("WriteCommit Setup");
         Console.WriteLine("=================");
         Console.WriteLine();
-        Console.WriteLine("Please enter your OpenAI API key.");
-        Console.WriteLine("You can get one from: https://platform.openai.com/api-keys");
+        Console.WriteLine("Please enter your OpenAI API key (or Azure OpenAI key).");
+        Console.WriteLine("You can get one from: https://platform.openai.com/api-keys or your Azure portal");
         Console.WriteLine();
         Console.Write("API Key (leave blank if not required): ");
 
@@ -116,14 +127,27 @@ public class ConfigurationService
             apiKey = null;
         }
 
-        // Prompt for endpoint and model
-        Console.Write($"Endpoint (default: https://api.openai.com/v1): ");
+        // Ask if using Azure OpenAI
+        Console.Write("Use Azure OpenAI service? (y/N): ");
+        var azureInput = Console.ReadLine()?.Trim().ToLowerInvariant();
+        bool useAzure = azureInput == "y" || azureInput == "yes";
+
+        // Prompt for endpoint and model/deployment
+        Console.Write(
+            useAzure
+                ? "Azure endpoint (e.g. https://your-resource.openai.azure.com): "
+                : "Endpoint (default: https://api.openai.com/v1): "
+        );
         var endpointInput = Console.ReadLine()?.Trim();
         var endpoint = string.IsNullOrWhiteSpace(endpointInput)
-            ? "https://api.openai.com/v1"
+            ? (useAzure ? "https://your-resource.openai.azure.com" : "https://api.openai.com/v1")
             : endpointInput;
 
-        Console.Write($"Default model (default: gpt-4o-mini): ");
+        Console.Write(
+            useAzure
+                ? "Deployment name (default: gpt-4o-mini): "
+                : "Default model (default: gpt-4o-mini): "
+        );
         var modelInput = Console.ReadLine()?.Trim();
         var model = string.IsNullOrWhiteSpace(modelInput) ? "gpt-4o-mini" : modelInput;
 
@@ -132,6 +156,7 @@ public class ConfigurationService
         config.OpenAiApiKey = apiKey;
         config.OpenAiEndpoint = endpoint;
         config.DefaultModel = model;
+        config.UseAzureOpenAI = useAzure;
 
         // Save configuration
         await SaveConfigurationAsync(config);
@@ -151,7 +176,7 @@ public class ConfigurationService
 
         if ((testResponse == "y" || testResponse == "yes") && !string.IsNullOrEmpty(apiKey))
         {
-            return await TestApiKeyAsync(apiKey, verbose);
+            return await TestApiKeyAsync(apiKey, useAzure, endpoint, model, verbose);
         }
 
         return true;
@@ -160,13 +185,23 @@ public class ConfigurationService
     /// <summary>
     /// Tests if the API key is valid by making a simple request
     /// </summary>
-    private async Task<bool> TestApiKeyAsync(string? apiKey, bool verbose)
+    private async Task<bool> TestApiKeyAsync(string? apiKey, bool useAzure, string endpoint, string model, bool verbose)
     {
         Console.WriteLine("Testing API key...");
 
         try
         {
-            var testClient = new ChatClient("gpt-4o-mini", apiKey);
+            ChatClient testClient;
+            if (useAzure)
+            {
+                var azureClient = new Azure.AI.OpenAI.AzureOpenAIClient(new Uri(endpoint), new ApiKeyCredential(apiKey));
+                testClient = azureClient.GetChatClient(model);
+            }
+            else
+            {
+                var options = new OpenAI.OpenAIClientOptions { Endpoint = new Uri(endpoint) };
+                testClient = new ChatClient(model, new ApiKeyCredential(apiKey), options);
+            }
             var messages = new List<ChatMessage>
             {
                 new SystemChatMessage("You are a helpful assistant."),
