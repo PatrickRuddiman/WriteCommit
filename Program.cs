@@ -20,7 +20,11 @@ class Program
             "Temperature setting for AI model (0-2)"
         );
         var topPOption = new Option<int>("--topp", () => 1, "Top-p setting for AI model (0-1)");
-        var presenceOption = new Option<int>("--presence", () => 0, "Presence penalty for AI model");
+        var presenceOption = new Option<int>(
+            "--presence",
+            () => 0,
+            "Presence penalty for AI model"
+        );
         var frequencyOption = new Option<int>(
             "--frequency",
             () => 0,
@@ -31,12 +35,11 @@ class Program
             description: "AI model to use (overrides setup)"
         );
 
-        var setupOption = new Option<bool>(
-            "--setup",
-            "Configure OpenAI or Azure OpenAI settings"
-        );
+        var setupOption = new Option<bool>("--setup", "Configure OpenAI or Azure OpenAI settings");
 
-        var rootCommand = new RootCommand("Generate AI-powered commit messages using OpenAI or Azure OpenAI")
+        var rootCommand = new RootCommand(
+            "Generate AI-powered commit messages using OpenAI or Azure OpenAI"
+        )
         {
             dryRunOption,
             verboseOption,
@@ -120,8 +123,8 @@ class Program
         if (string.IsNullOrEmpty(apiKey))
         {
             throw new InvalidOperationException(
-                "OpenAI API key not found. Please run 'WriteCommit --setup' to configure your API key " +
-                "or set the OPENAI_API_KEY environment variable."
+                "OpenAI API key not found. Please run 'WriteCommit --setup' to configure your API key "
+                    + "or set the OPENAI_API_KEY environment variable."
             );
         }
 
@@ -144,11 +147,13 @@ class Program
         var stagedChanges = await gitService.GetStagedChangesAsync(verbose);
 
         // If the diff is very small, grab a few extra lines of context
-        var fileCount = System.Text.RegularExpressions.Regex.Matches(
-            stagedChanges,
-            "^diff --git",
-            System.Text.RegularExpressions.RegexOptions.Multiline
-        ).Count;
+        var fileCount = System
+            .Text.RegularExpressions.Regex.Matches(
+                stagedChanges,
+                "^diff --git",
+                System.Text.RegularExpressions.RegexOptions.Multiline
+            )
+            .Count;
         var lineCount = stagedChanges.Split('\n').Length;
 
         if (
@@ -250,7 +255,9 @@ class Program
         {
             Console.WriteLine();
             Console.WriteLine("❌ Setup failed.");
-            Console.WriteLine("You can try again or set the OPENAI_API_KEY environment variable manually.");
+            Console.WriteLine(
+                "You can try again or set the OPENAI_API_KEY environment variable manually."
+            );
         }
     }
 }
