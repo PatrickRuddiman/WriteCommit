@@ -26,13 +26,13 @@ A cross-platform .NET tool that generates AI-powered commit messages using OpenA
 **Quick install (latest release):**
 ```bash
 # Auto-detect platform (Linux/macOS)
-curl -sSL https://raw.githubusercontent.com/PatrickRuddiman/Toolkit/main/Tools/Write-Commit/install-universal.sh | bash
+curl -sSL https://raw.githubusercontent.com/PatrickRuddiman/WriteCommit/refs/heads/main/install-universal.sh | bash
 
 # Specific architecture (Linux/macOS)
-curl -sSL https://raw.githubusercontent.com/PatrickRuddiman/Toolkit/main/Tools/Write-Commit/install-universal.sh | bash -s -- --arch linux-arm64
+curl -sSL https://raw.githubusercontent.com/PatrickRuddiman/WriteCommit/refs/heads/main/install-universal.sh | bash -s -- --arch linux-arm64
 
 # Windows - One-liner install (PowerShell)
-iex (irm https://raw.githubusercontent.com/PatrickRuddiman/Toolkit/main/Tools/Write-Commit/install-web.ps1)
+iex (irm https://raw.githubusercontent.com/PatrickRuddiman/WriteCommit/refs/heads/main/install-web.ps1)
 ```
 
 **Supported architectures:**
