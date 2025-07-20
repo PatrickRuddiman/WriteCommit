@@ -1,7 +1,7 @@
-using System.Text;
-using OpenAI.Chat;
 using System.ClientModel;
+using System.Text;
 using Azure.AI.OpenAI;
+using OpenAI.Chat;
 using WriteCommit.Constants;
 using WriteCommit.Models;
 
@@ -23,9 +23,7 @@ public class OpenAIService
         }
 
         _apiKey = apiKey;
-        _endpoint = string.IsNullOrWhiteSpace(endpoint)
-            ? "https://api.openai.com/v1"
-            : endpoint;
+        _endpoint = string.IsNullOrWhiteSpace(endpoint) ? "https://api.openai.com/v1" : endpoint;
         _useAzure = useAzure;
         _patternsDirectory = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "patterns");
     }
@@ -34,7 +32,10 @@ public class OpenAIService
     {
         if (_useAzure)
         {
-            var azureClient = new Azure.AI.OpenAI.AzureOpenAIClient(new Uri(_endpoint), new ApiKeyCredential(_apiKey));
+            var azureClient = new Azure.AI.OpenAI.AzureOpenAIClient(
+                new Uri(_endpoint),
+                new ApiKeyCredential(_apiKey)
+            );
             return azureClient.GetChatClient(model);
         }
 
@@ -249,7 +250,8 @@ public class OpenAIService
         }
 
         var combinedContent = string.Join("\n\n", chunkMessages);
-        var estimatedTokens = EstimateTokenCount(systemPrompt) + EstimateTokenCount(combinedContent);
+        var estimatedTokens =
+            EstimateTokenCount(systemPrompt) + EstimateTokenCount(combinedContent);
 
         if (estimatedTokens > MaxContextTokens && chunkMessages.Count > 1)
         {
@@ -267,7 +269,16 @@ public class OpenAIService
                 var msgTokens = EstimateTokenCount(msg);
                 if (currentTokens + msgTokens > MaxContextTokens / 2 && currentGroup.Count > 0)
                 {
-                    var summary = await CombineChunkMessagesAsync(currentGroup, pattern, temperature, topP, presence, frequency, model, verbose);
+                    var summary = await CombineChunkMessagesAsync(
+                        currentGroup,
+                        pattern,
+                        temperature,
+                        topP,
+                        presence,
+                        frequency,
+                        model,
+                        verbose
+                    );
                     groupedSummaries.Add(summary);
                     currentGroup.Clear();
                     currentTokens = EstimateTokenCount(systemPrompt);
@@ -279,11 +290,29 @@ public class OpenAIService
 
             if (currentGroup.Count > 0)
             {
-                var summary = await CombineChunkMessagesAsync(currentGroup, pattern, temperature, topP, presence, frequency, model, verbose);
+                var summary = await CombineChunkMessagesAsync(
+                    currentGroup,
+                    pattern,
+                    temperature,
+                    topP,
+                    presence,
+                    frequency,
+                    model,
+                    verbose
+                );
                 groupedSummaries.Add(summary);
             }
 
-            return await CombineChunkMessagesAsync(groupedSummaries, pattern, temperature, topP, presence, frequency, model, verbose);
+            return await CombineChunkMessagesAsync(
+                groupedSummaries,
+                pattern,
+                temperature,
+                topP,
+                presence,
+                frequency,
+                model,
+                verbose
+            );
         }
 
         // Create a client for this specific model

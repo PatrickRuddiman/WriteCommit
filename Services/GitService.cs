@@ -28,13 +28,18 @@ public class GitService
         return result.Output;
     }
 
-    public async Task<string> GetStagedChangesWithContextAsync(int contextLines, bool verbose = false)
+    public async Task<string> GetStagedChangesWithContextAsync(
+        int contextLines,
+        bool verbose = false
+    )
     {
         var args = $"--no-pager diff --staged --unified={contextLines}";
         var result = await RunCommandAsync("git", args, verbose);
         if (result.ExitCode != 0)
         {
-            throw new InvalidOperationException($"Failed to get staged changes with context: {result.Error}");
+            throw new InvalidOperationException(
+                $"Failed to get staged changes with context: {result.Error}"
+            );
         }
         return result.Output;
     }

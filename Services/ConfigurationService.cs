@@ -1,7 +1,7 @@
-using System.Text.Json;
-using OpenAI.Chat;
-using Azure.AI.OpenAI;
 using System.ClientModel;
+using System.Text.Json;
+using Azure.AI.OpenAI;
+using OpenAI.Chat;
 using WriteCommit.Constants;
 using WriteCommit.Models;
 
@@ -114,7 +114,9 @@ public class ConfigurationService
         Console.WriteLine("=================");
         Console.WriteLine();
         Console.WriteLine("Please enter your OpenAI API key (or Azure OpenAI key).");
-        Console.WriteLine("You can get one from: https://platform.openai.com/api-keys or your Azure portal");
+        Console.WriteLine(
+            "You can get one from: https://platform.openai.com/api-keys or your Azure portal"
+        );
         Console.WriteLine();
         Console.Write("API Key (leave blank if not required): ");
 
@@ -196,7 +198,13 @@ public class ConfigurationService
     /// <summary>
     /// Tests if the API key is valid by making a simple request
     /// </summary>
-    private async Task<bool> TestApiKeyAsync(string? apiKey, bool useAzure, string endpoint, string model, bool verbose)
+    private async Task<bool> TestApiKeyAsync(
+        string? apiKey,
+        bool useAzure,
+        string endpoint,
+        string model,
+        bool verbose
+    )
     {
         Console.WriteLine("Testing API key...");
 
@@ -205,7 +213,10 @@ public class ConfigurationService
             ChatClient testClient;
             if (useAzure)
             {
-                var azureClient = new Azure.AI.OpenAI.AzureOpenAIClient(new Uri(endpoint), new ApiKeyCredential(apiKey));
+                var azureClient = new Azure.AI.OpenAI.AzureOpenAIClient(
+                    new Uri(endpoint),
+                    new ApiKeyCredential(apiKey)
+                );
                 testClient = azureClient.GetChatClient(model);
             }
             else
