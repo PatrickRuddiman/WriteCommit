@@ -1,6 +1,6 @@
 # WriteCommit
 
-A cross-platform .NET tool that generates AI-powered commit messages using OpenAI's GPT models.
+A cross-platform .NET tool that generates AI-powered commit messages using OpenAI or Azure OpenAI.
 
 ## ✨ Features
 
@@ -9,7 +9,7 @@ A cross-platform .NET tool that generates AI-powered commit messages using OpenA
 - 🎛️ **Highly configurable** - Adjust AI parameters to your preference
 - 🧪 **Dry-run mode** - Preview generated messages without committing
 - 📝 **Verbose output** - Detailed logging for debugging and transparency
-- ⚡ **Fast and lightweight** - Direct OpenAI API integration for quick responses
+- ⚡ **Fast and lightweight** - Direct OpenAI or Azure OpenAI integration for quick responses
 - 📋 **Smart chunking** - Handles large diffs by intelligently splitting them into semantic chunks
 - 🔍 **Context-aware** - Adds surrounding code lines when diffs are very small for better summaries
 
@@ -18,7 +18,7 @@ A cross-platform .NET tool that generates AI-powered commit messages using OpenA
 ### Prerequisites
 
 - [.NET 8.0 or later](https://dotnet.microsoft.com/download)
- - OpenAI API key (optional, required only if your endpoint needs authentication)
+- OpenAI or Azure OpenAI API key (optional, required only if your endpoint needs authentication)
 - Git repository with staged changes
 
 ### Installation
@@ -101,13 +101,13 @@ WriteCommit --dry-run --verbose --temperature 0.5
 | `--model` | from setup | OpenAI model to use |
 | `--presence` | `0` | Presence penalty (-2 to 2) |
 | `--frequency` | `0` | Frequency penalty (-2 to 2) |
-| `--setup` | `false` | Configure OpenAI settings |
+| `--setup` | `false` | Configure OpenAI or Azure OpenAI settings |
 
 ## 🔧 How It Works
 
 1. **Validates environment** - Checks for git repository and OpenAI settings
 2. **Analyzes changes** - Processes your staged git diff using semantic chunking
-3. **Generates message** - Uses OpenAI API to create meaningful commit message
+3. **Generates message** - Uses OpenAI or Azure OpenAI to create meaningful commit message
 4. **Commits changes** - Applies the generated message (unless `--dry-run`)
 
 ## 🔑 Configuration
@@ -121,7 +121,7 @@ WriteCommit --dry-run --verbose --temperature 0.5
 WriteCommit --setup
 ```
 
-This will prompt you to enter your API key (if needed), API endpoint, and default model, then save them to `~/.writecommit/config.json`.
+This will prompt you to enter your API key (if needed), choose between OpenAI or Azure OpenAI, specify the endpoint, and default model/deployment. If you select Azure but leave the endpoint blank, WriteCommit will fall back to the standard OpenAI endpoint. The values are saved to `~/.writecommit/config.json`.
 
 **Option 2: Using Environment Variables**
 

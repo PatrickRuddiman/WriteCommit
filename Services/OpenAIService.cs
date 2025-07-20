@@ -1,6 +1,7 @@
 using System.Text;
 using OpenAI.Chat;
 using System.ClientModel;
+using Azure.AI.OpenAI;
 using WriteCommit.Constants;
 using WriteCommit.Models;
 
@@ -10,10 +11,11 @@ public class OpenAIService
 {
     private readonly string _apiKey;
     private readonly string _endpoint;
+    private readonly bool _useAzure;
     private readonly string _patternsDirectory;
     private const int MaxContextTokens = 128000;
 
-    public OpenAIService(string apiKey, string? endpoint = null)
+    public OpenAIService(string apiKey, string? endpoint = null, bool useAzure = false)
     {
         if (string.IsNullOrEmpty(apiKey))
         {
@@ -24,7 +26,20 @@ public class OpenAIService
         _endpoint = string.IsNullOrWhiteSpace(endpoint)
             ? "https://api.openai.com/v1"
             : endpoint;
+        _useAzure = useAzure;
         _patternsDirectory = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "patterns");
+    }
+
+    private ChatClient CreateChatClient(string model)
+    {
+        if (_useAzure)
+        {
+            var azureClient = new Azure.AI.OpenAI.AzureOpenAIClient(new Uri(_endpoint), new ApiKeyCredential(_apiKey));
+            return azureClient.GetChatClient(model);
+        }
+
+        var options = new OpenAI.OpenAIClientOptions { Endpoint = new Uri(_endpoint) };
+        return new ChatClient(model, new ApiKeyCredential(_apiKey), options);
     }
 
     public async Task<string> GenerateCommitMessageAsync(
@@ -155,11 +170,7 @@ public class OpenAIService
         }
 
         // Create a client for this specific model
-        var clientOptions = new OpenAI.OpenAIClientOptions
-        {
-            Endpoint = new Uri(_endpoint)
-        };
-        var chatClient = new ChatClient(model, new ApiKeyCredential(_apiKey), clientOptions);
+        var chatClient = CreateChatClient(model);
 
         // Create the chat messages
         var messages = new List<ChatMessage>
@@ -276,11 +287,7 @@ public class OpenAIService
         }
 
         // Create a client for this specific model
-        var clientOptions = new OpenAI.OpenAIClientOptions
-        {
-            Endpoint = new Uri(_endpoint)
-        };
-        var chatClient = new ChatClient(model, new ApiKeyCredential(_apiKey), clientOptions);
+        var chatClient = CreateChatClient(model);
 
         // Create the chat messages
         var messages = new List<ChatMessage>
