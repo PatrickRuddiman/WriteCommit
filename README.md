@@ -150,6 +150,26 @@ dotnet build
 dotnet run -- --help
 ```
 
+## VS Code Extension
+
+The `vscode-extension` folder contains an extension that lets you run WriteCommit
+directly from VS Code. To try it out:
+
+1. Open the `vscode-extension` folder in VS Code.
+2. Run `npm install` and then `npm run build` to compile the extension.
+3. Press `F5` to launch an Extension Development Host.
+
+The extension adds a Source Control panel action that runs `WriteCommit --dry-run`
+and inserts the generated message into the commit input box. It installs the
+CLI automatically if missing and supports configuring the OpenAI API key and
+executable path via settings.
+
+### Publishing
+The workflow `.github/workflows/publish-extension.yml` uses `vsce publish` to
+upload the extension to the Visual Studio Code Marketplace when a tag matching
+`extension-v*` is pushed. Before triggering the workflow, add a `VSCE_TOKEN`
+secret to your repository with a Marketplace personal access token.
+
 ### Contributing
 1. Fork the repository
 2. Create a feature branch (`git checkout -b feature/amazing-feature`)

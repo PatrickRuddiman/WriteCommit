@@ -60,3 +60,7 @@ Thumbs.db
 
 # Fabric temporary files
 fabric_temp_*
+vscode-extension/node_modules
+vscode-extension/out
+vscode-extension/package-lock.json
+vscode-extension/*.vsix
