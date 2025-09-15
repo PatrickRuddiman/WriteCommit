@@ -159,9 +159,12 @@ directly from VS Code. To try it out:
 3. Press `F5` to launch an Extension Development Host.
 
 The extension adds a Source Control panel action that runs `WriteCommit --dry-run`
-and inserts the generated message into the commit input box. It installs the
-CLI automatically if missing and supports configuring the OpenAI API key,
-endpoint, model, and executable path via settings.
+and inserts the generated message into the commit input box. As soon as the
+extension activates it ensures the CLI is installed, reusing the endpoint and
+model you have configured through the `vscode-lm` Language Model settings (for
+example GitHub Copilot). You can still override those values through the
+extension settings, which also let you configure the OpenAI API key and the CLI
+path.
 
 ### Publishing
 The workflow `.github/workflows/publish-extension.yml` uses `vsce publish` to

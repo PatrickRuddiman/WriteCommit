@@ -6,9 +6,10 @@ using the WriteCommit tool and inserts it into the commit message input box.
 
 ## Features
 - Single click commit message generation with OpenAI
-- Automatically installs the WriteCommit CLI if not present
+- Automatically installs the WriteCommit CLI when the extension is first activated
+- Reuses the Language Model (`vscode-lm`) endpoint and model configured in VS Code (including GitHub Copilot)
 - Uses the `--dry-run` option so nothing is committed automatically
-- Configurable OpenAI key, endpoint, model, and executable path
+- Configurable OpenAI key, endpoint, model, and executable path for manual overrides
 - Shows a spinner in the Source Control panel while generating the message
 
 ## Configuration
@@ -18,9 +19,15 @@ using the WriteCommit tool and inserts it into the commit message input box.
 - `writecommit.executablePath` – Path to the WriteCommit executable
 
 ## Installation
-When the command is first run, the extension checks for the `WriteCommit`
-executable. If it is not found, it will download and install it using the
-official installation script for your platform.
+As soon as the extension activates (after VS Code finishes starting), it checks
+for the `WriteCommit` executable. If it is missing, the extension downloads and
+installs it using the official installation script for your platform so the CLI
+is ready before you run the command.
+
+If you have configured an endpoint or model through the `vscode-lm` extension,
+the WriteCommit command will automatically reuse those settings. You can still
+override them with the `writecommit.*` settings if you need to target a
+different model.
 
 
 ## Publishing

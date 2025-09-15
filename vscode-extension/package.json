@@ -21,6 +21,7 @@
     "Source Control"
   ],
   "activationEvents": [
+    "onStartupFinished",
     "onCommand:writecommit.generateMessage"
   ],
   "contributes": {
