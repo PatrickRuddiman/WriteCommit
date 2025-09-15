@@ -77,6 +77,24 @@ public class ConfigurationService
     }
 
     /// <summary>
+    /// Gets the configured OpenAI endpoint or null if not set
+    /// </summary>
+    public async Task<string?> GetOpenAiEndpointAsync()
+    {
+        var config = await LoadConfigurationAsync();
+        return config?.OpenAiEndpoint;
+    }
+
+    /// <summary>
+    /// Gets the configured default model or null if not set
+    /// </summary>
+    public async Task<string?> GetDefaultModelAsync()
+    {
+        var config = await LoadConfigurationAsync();
+        return config?.DefaultModel;
+    }
+
+    /// <summary>
     /// Prompts user to enter and save their OpenAI API key
     /// </summary>
     public async Task<bool> SetupApiKeyAsync(bool verbose = false)
@@ -87,7 +105,7 @@ public class ConfigurationService
         Console.WriteLine("Please enter your OpenAI API key.");
         Console.WriteLine("You can get one from: https://platform.openai.com/api-keys");
         Console.WriteLine();
-        Console.Write("API Key: ");
+        Console.Write("API Key (leave blank if not required): ");
 
         // Read API key with masked input
         var apiKey = ReadMaskedInput();
@@ -95,25 +113,30 @@ public class ConfigurationService
 
         if (string.IsNullOrWhiteSpace(apiKey))
         {
-            Console.WriteLine("No API key entered. Setup cancelled.");
-            return false;
+            apiKey = null;
         }
 
-        // Basic validation
-        if (!apiKey.StartsWith("sk-"))
-        {
-            Console.WriteLine("Invalid API key format. OpenAI API keys should start with 'sk-'.");
-            return false;
-        }
+        // Prompt for endpoint and model
+        Console.Write($"Endpoint (default: https://api.openai.com/v1): ");
+        var endpointInput = Console.ReadLine()?.Trim();
+        var endpoint = string.IsNullOrWhiteSpace(endpointInput)
+            ? "https://api.openai.com/v1"
+            : endpointInput;
+
+        Console.Write($"Default model (default: gpt-4o-mini): ");
+        var modelInput = Console.ReadLine()?.Trim();
+        var model = string.IsNullOrWhiteSpace(modelInput) ? "gpt-4o-mini" : modelInput;
 
         // Load existing config or create new one
         var config = await LoadConfigurationAsync() ?? new AppConfiguration();
         config.OpenAiApiKey = apiKey;
+        config.OpenAiEndpoint = endpoint;
+        config.DefaultModel = model;
 
         // Save configuration
         await SaveConfigurationAsync(config);
 
-        Console.WriteLine($"✅ API key saved to {_configFilePath}");
+        Console.WriteLine($"✅ Configuration saved to {_configFilePath}");
 
         if (verbose)
         {
@@ -126,7 +149,7 @@ public class ConfigurationService
         Console.Write("Would you like to test the API key? (y/N): ");
         var testResponse = Console.ReadLine()?.Trim().ToLowerInvariant();
 
-        if (testResponse == "y" || testResponse == "yes")
+        if ((testResponse == "y" || testResponse == "yes") && !string.IsNullOrEmpty(apiKey))
         {
             return await TestApiKeyAsync(apiKey, verbose);
         }
@@ -137,7 +160,7 @@ public class ConfigurationService
     /// <summary>
     /// Tests if the API key is valid by making a simple request
     /// </summary>
-    private async Task<bool> TestApiKeyAsync(string apiKey, bool verbose)
+    private async Task<bool> TestApiKeyAsync(string? apiKey, bool verbose)
     {
         Console.WriteLine("Testing API key...");
 

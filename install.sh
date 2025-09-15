@@ -5,9 +5,7 @@ runtime="linux-x64"
 exeName="WriteCommit"
 
 echo "Publishing WriteCommit for $runtime..."
-dotnet publish WriteCommit.csproj --configuration Release --runtime $runtime --self-contained true --output "publish/$runtime"
-
-if [ $? -eq 0 ]; then
+if dotnet publish WriteCommit.csproj --configuration Release --runtime "$runtime" --self-contained true --output "publish/$runtime"; then
     echo "Publish successful!"
     
     # Create a directory in user's local bin if it doesn't exist
@@ -23,10 +21,7 @@ if [ $? -eq 0 ]; then
     targetPath="$localBin/$exeName"
     
     echo "Installing WriteCommit to $targetPath..."
-    cp "$sourcePath" "$targetPath"
-    chmod +x "$targetPath"
-    
-    if [ $? -eq 0 ]; then
+    if cp "$sourcePath" "$targetPath" && chmod +x "$targetPath"; then
         echo "✅ WriteCommit installed successfully!"
         
         echo "Note: Make sure $localBin is in your PATH."

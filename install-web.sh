@@ -1,12 +1,15 @@
 #!/bin/bash
 # Web installer for WriteCommit tool (Linux/macOS)
-# Usage: curl -sSL https://raw.githubusercontent.com/PatrickRuddiman/Toolkit/main/Tools/Write-Commit/install-web.sh | bash
+# Usage: curl -sSL https://raw.githubusercontent.com/PatrickRuddiman/WriteCommit/main/install-web.sh | bash
 
 set -e
 
 # Configuration
-REPO="PatrickRuddiman/Toolkit"
-TOOL_NAME="WriteCommit"
+REPO="PatrickRuddiman/WriteCommit"
+# Name of the binary within the archive
+BINARY_NAME="WriteCommit"
+# Prefix for assets
+TOOL_ASSET="writecommit"
 INSTALL_DIR="$HOME/.local/share/WriteCommit"
 BIN_DIR="$HOME/.local/bin"
 VERSION="latest"
@@ -44,7 +47,7 @@ case $OS in
     *)
         echo "❌ Unsupported OS: $OS"
         echo "This script is for Linux and macOS only. For Windows, use the PowerShell installer:"
-        echo "iex (irm https://raw.githubusercontent.com/PatrickRuddiman/Toolkit/main/Tools/Write-Commit/install-web.ps1)"
+        echo "iex (irm https://raw.githubusercontent.com/PatrickRuddiman/WriteCommit/main/install-web.ps1)"
         exit 1
         ;;
 esac
@@ -81,13 +84,17 @@ fi
 echo "📦 Version: $VERSION"
 
 # Construct download URL with correct naming pattern
-ASSET_NAME="${TOOL_NAME}-${PLATFORM}-${ARCH_TAG}-${VERSION}.tar.gz"
+ASSET_NAME="${TOOL_ASSET}-${PLATFORM}-${ARCH_TAG}-${VERSION}.tar.gz"
 DOWNLOAD_URL="https://github.com/$REPO/releases/download/$VERSION/$ASSET_NAME"
 
 echo "⬇️  Downloading $ASSET_NAME from $DOWNLOAD_URL..."
 
-# Create temporary directory
+# Create temporary directory and ensure cleanup
 TEMP_DIR=$(mktemp -d)
+cleanup() {
+    rm -rf "$TEMP_DIR"
+}
+trap cleanup EXIT
 cd "$TEMP_DIR"
 
 # Download the release
@@ -120,10 +127,10 @@ fi
 
 # Create a wrapper script in the bin directory
 echo "📥 Creating wrapper script in $BIN_DIR..."
-WRAPPER_PATH="$BIN_DIR/$TOOL_NAME"
+WRAPPER_PATH="$BIN_DIR/$BINARY_NAME"
 cat > "$WRAPPER_PATH" << EOF
 #!/bin/bash
-exec "$INSTALL_DIR/$TOOL_NAME" "\$@"
+exec "$INSTALL_DIR/$BINARY_NAME" "\$@"
 EOF
 chmod +x "$WRAPPER_PATH"
 
@@ -138,9 +145,11 @@ update_shell_config() {
     
     if [ -f "$config_file" ]; then
         if ! grep -q "$BIN_DIR" "$config_file"; then
-            echo "" >> "$config_file"
-            echo "# Added by WriteCommit installer" >> "$config_file"
-            echo "$path_entry" >> "$config_file"
+            {
+                echo ""
+                echo "# Added by WriteCommit installer"
+                echo "$path_entry"
+            } >> "$config_file"
             echo "✅ Updated $config_file"
             return 0
         else
@@ -170,9 +179,11 @@ if command -v fish >/dev/null 2>&1 || [ "$SHELL" = "/usr/bin/fish" ]; then
     if [ -f "$FISH_CONFIG" ]; then
         if ! grep -q "$BIN_DIR" "$FISH_CONFIG"; then
             mkdir -p "$(dirname "$FISH_CONFIG")"
-            echo "" >> "$FISH_CONFIG"
-            echo "# Added by WriteCommit installer" >> "$FISH_CONFIG"
-            echo "fish_add_path $BIN_DIR" >> "$FISH_CONFIG"
+            {
+                echo ""
+                echo "# Added by WriteCommit installer"
+                echo "fish_add_path $BIN_DIR"
+            } >> "$FISH_CONFIG"
             echo "✅ Updated $FISH_CONFIG"
             PATH_UPDATED=true
         else
@@ -188,21 +199,21 @@ if [ "$PATH_UPDATED" = false ]; then
 fi
 
 echo ""
-echo "✅ WriteCommit $VERSION installed successfully!"
+echo "✅ $BINARY_NAME $VERSION installed successfully!"
 echo ""
 echo "📂 Installation directory: $INSTALL_DIR"
 echo "🚀 Example usage:"
 echo "   git add ."
-echo "   WriteCommit"
-echo "   WriteCommit --dry-run"
-echo "   WriteCommit --verbose"
+echo "   $BINARY_NAME"
+echo "   $BINARY_NAME --dry-run"
+echo "   $BINARY_NAME --verbose"
 
 # Check if binary is in PATH
-if command -v WriteCommit >/dev/null 2>&1; then
+if command -v "$BINARY_NAME" >/dev/null 2>&1; then
     echo ""
-    echo "🎉 WriteCommit is ready to use!"
+    echo "🎉 $BINARY_NAME is ready to use!"
 else
     echo ""
-    echo "⚠️ You need to restart your terminal or run the following command to use WriteCommit in this session:"
+    echo "⚠️ You need to restart your terminal or run the following command to use $BINARY_NAME in this session:"
     echo "   export PATH=\"$BIN_DIR:\$PATH\""
 fi

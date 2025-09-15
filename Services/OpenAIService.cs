@@ -1,5 +1,6 @@
 using System.Text;
 using OpenAI.Chat;
+using System.ClientModel;
 using WriteCommit.Constants;
 using WriteCommit.Models;
 
@@ -8,9 +9,11 @@ namespace WriteCommit.Services;
 public class OpenAIService
 {
     private readonly string _apiKey;
+    private readonly string _endpoint;
     private readonly string _patternsDirectory;
+    private const int MaxContextTokens = 128000;
 
-    public OpenAIService(string apiKey)
+    public OpenAIService(string apiKey, string? endpoint = null)
     {
         if (string.IsNullOrEmpty(apiKey))
         {
@@ -18,6 +21,9 @@ public class OpenAIService
         }
 
         _apiKey = apiKey;
+        _endpoint = string.IsNullOrWhiteSpace(endpoint)
+            ? "https://api.openai.com/v1"
+            : endpoint;
         _patternsDirectory = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "patterns");
     }
 
@@ -149,7 +155,11 @@ public class OpenAIService
         }
 
         // Create a client for this specific model
-        var chatClient = new ChatClient(model, _apiKey);
+        var clientOptions = new OpenAI.OpenAIClientOptions
+        {
+            Endpoint = new Uri(_endpoint)
+        };
+        var chatClient = new ChatClient(model, new ApiKeyCredential(_apiKey), clientOptions);
 
         // Create the chat messages
         var messages = new List<ChatMessage>
@@ -227,14 +237,56 @@ public class OpenAIService
             throw new InvalidOperationException($"Failed to load pattern: {pattern}");
         }
 
+        var combinedContent = string.Join("\n\n", chunkMessages);
+        var estimatedTokens = EstimateTokenCount(systemPrompt) + EstimateTokenCount(combinedContent);
+
+        if (estimatedTokens > MaxContextTokens && chunkMessages.Count > 1)
+        {
+            if (verbose)
+            {
+                Console.WriteLine("Context length exceeded, re-chunking summaries...");
+            }
+
+            var groupedSummaries = new List<string>();
+            var currentGroup = new List<string>();
+            var currentTokens = EstimateTokenCount(systemPrompt);
+
+            foreach (var msg in chunkMessages)
+            {
+                var msgTokens = EstimateTokenCount(msg);
+                if (currentTokens + msgTokens > MaxContextTokens / 2 && currentGroup.Count > 0)
+                {
+                    var summary = await CombineChunkMessagesAsync(currentGroup, pattern, temperature, topP, presence, frequency, model, verbose);
+                    groupedSummaries.Add(summary);
+                    currentGroup.Clear();
+                    currentTokens = EstimateTokenCount(systemPrompt);
+                }
+
+                currentGroup.Add(msg);
+                currentTokens += msgTokens;
+            }
+
+            if (currentGroup.Count > 0)
+            {
+                var summary = await CombineChunkMessagesAsync(currentGroup, pattern, temperature, topP, presence, frequency, model, verbose);
+                groupedSummaries.Add(summary);
+            }
+
+            return await CombineChunkMessagesAsync(groupedSummaries, pattern, temperature, topP, presence, frequency, model, verbose);
+        }
+
         // Create a client for this specific model
-        var chatClient = new ChatClient(model, _apiKey);
+        var clientOptions = new OpenAI.OpenAIClientOptions
+        {
+            Endpoint = new Uri(_endpoint)
+        };
+        var chatClient = new ChatClient(model, new ApiKeyCredential(_apiKey), clientOptions);
 
         // Create the chat messages
         var messages = new List<ChatMessage>
         {
             new SystemChatMessage(systemPrompt),
-            new UserChatMessage(string.Join("\n\n", chunkMessages)),
+            new UserChatMessage(combinedContent),
         };
 
         // Create chat completion options
@@ -312,5 +364,13 @@ public class OpenAIService
     {
         // OpenAI uses -2 to 2 for penalties
         return Math.Clamp((float)penalty, -2f, 2f);
+    }
+
+    /// <summary>
+    /// Estimates token count using a rough 4 chars per token heuristic
+    /// </summary>
+    private int EstimateTokenCount(string text)
+    {
+        return Math.Max(1, text.Length / 4);
     }
 }

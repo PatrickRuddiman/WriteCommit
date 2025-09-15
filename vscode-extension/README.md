@@ -8,11 +8,13 @@ using the WriteCommit tool and inserts it into the commit message input box.
 - Single click commit message generation with OpenAI
 - Automatically installs the WriteCommit CLI if not present
 - Uses the `--dry-run` option so nothing is committed automatically
-- Configurable OpenAI key and executable path
+- Configurable OpenAI key, endpoint, model, and executable path
 - Shows a spinner in the Source Control panel while generating the message
 
 ## Configuration
 - `writecommit.openAIApiKey` – API key used for generation
+- `writecommit.openAIEndpoint` – Custom API endpoint (optional)
+- `writecommit.model` – Model name to use
 - `writecommit.executablePath` – Path to the WriteCommit executable
 
 ## Installation

@@ -7,7 +7,7 @@ Write-Host ""
 
 Write-Host "1. Checking tool installation..." -ForegroundColor Yellow
 try {
-    $version = write-commit --version 2>$null
+    $version = WriteCommit --version 2>$null
     if ($LASTEXITCODE -eq 0) {
         Write-Host "✅ WriteCommit is installed" -ForegroundColor Green
     } else {
@@ -21,7 +21,7 @@ try {
 
 Write-Host ""
 Write-Host "2. Showing help..." -ForegroundColor Yellow
-write-commit --help
+WriteCommit --help
 
 Write-Host ""
 Write-Host "3. Checking git repository status..." -ForegroundColor Yellow
@@ -40,14 +40,14 @@ if ($LASTEXITCODE -ne 0) {
         Write-Host "4. Running WriteCommit in dry-run mode..." -ForegroundColor Yellow
         Write-Host "   (This will generate a commit message without committing)" -ForegroundColor Gray
         Write-Host ""
-        write-commit --dry-run --verbose
+        WriteCommit --dry-run --verbose
         
     } else {
         Write-Host "ℹ️ No staged changes found" -ForegroundColor Blue
         Write-Host "   To test the tool:" -ForegroundColor Gray
         Write-Host "   1. Make some changes to files" -ForegroundColor Gray
         Write-Host "   2. Run: git add ." -ForegroundColor Gray
-        Write-Host "   3. Run: write-commit --dry-run" -ForegroundColor Gray
+        Write-Host "   3. Run: WriteCommit --dry-run" -ForegroundColor Gray
     }
 }
 

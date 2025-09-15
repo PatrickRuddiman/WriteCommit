@@ -33,6 +33,8 @@ async function runWriteCommit(): Promise<string> {
     const config = vscode.workspace.getConfiguration('writecommit');
     const executable = config.get<string>('executablePath', 'WriteCommit');
     const apiKey = config.get<string>('openAIApiKey', '');
+    const endpoint = config.get<string>('openAIEndpoint', '');
+    const model = config.get<string>('model', '');
 
     if (!(await isExecutableAvailable(executable))) {
         await installWriteCommit();
@@ -42,9 +44,16 @@ async function runWriteCommit(): Promise<string> {
     if (apiKey) {
         env['OPENAI_API_KEY'] = apiKey;
     }
+    if (endpoint) {
+        env['OPENAI_ENDPOINT'] = endpoint;
+    }
 
     try {
-        const { stdout } = await execFileAsync(executable, ['--dry-run'], { env });
+        const args = ['--dry-run'];
+        if (model) {
+            args.push('--model', model);
+        }
+        const { stdout } = await execFileAsync(executable, args, { env });
         const output = stdout.trim();
         const match = output.match(/Generated commit message:\s*([\s\S]*?)(?:\n\s*Dry run mode|$)/);
         return match ? match[1].trim() : output;

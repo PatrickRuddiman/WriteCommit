@@ -47,6 +47,16 @@
           "default": "",
           "description": "OpenAI API key for WriteCommit"
         },
+        "writecommit.openAIEndpoint": {
+          "type": "string",
+          "default": "",
+          "description": "Custom OpenAI API endpoint"
+        },
+        "writecommit.model": {
+          "type": "string",
+          "default": "",
+          "description": "OpenAI model to use for generation"
+        },
         "writecommit.executablePath": {
           "type": "string",
           "default": "WriteCommit",

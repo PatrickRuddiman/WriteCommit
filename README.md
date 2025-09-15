@@ -6,7 +6,7 @@ A cross-platform .NET tool that generates AI-powered commit messages using OpenA
 
 - 🤖 **AI-powered commit messages** - Generate meaningful commit messages from your staged changes
 - 🔄 **Cross-platform** - Works on Windows, macOS, and Linux
-- 🎛️ **Highly configurable** - Adjust AI parameters and patterns to your preference
+- 🎛️ **Highly configurable** - Adjust AI parameters to your preference
 - 🧪 **Dry-run mode** - Preview generated messages without committing
 - 📝 **Verbose output** - Detailed logging for debugging and transparency
 - ⚡ **Fast and lightweight** - Direct OpenAI API integration for quick responses
@@ -17,7 +17,7 @@ A cross-platform .NET tool that generates AI-powered commit messages using OpenA
 ### Prerequisites
 
 - [.NET 8.0 or later](https://dotnet.microsoft.com/download)
-- OpenAI API key (either set as `OPENAI_API_KEY` environment variable or via `--setup`)
+ - OpenAI API key (optional, required only if your endpoint needs authentication)
 - Git repository with staged changes
 
 ### Installation
@@ -77,19 +77,16 @@ WriteCommit
 
 ```bash
 # Preview message without committing
-write-commit --dry-run
+WriteCommit --dry-run
 
 # Detailed output for debugging
-write-commit --verbose
+WriteCommit --verbose
 
 # Custom AI parameters
-write-commit --temperature 0.7 --topp 0.9 --pattern custom_pattern
-
-# Force reinstall all patterns
-write-commit --reinstall-patterns
+WriteCommit --temperature 0.7 --topp 0.9
 
 # Combine multiple options
-write-commit --dry-run --verbose --temperature 0.5 --reinstall-patterns
+WriteCommit --dry-run --verbose --temperature 0.5
 ```
 
 ## ⚙️ Configuration Options
@@ -98,18 +95,16 @@ write-commit --dry-run --verbose --temperature 0.5 --reinstall-patterns
 |--------|---------|-------------|
 | `--dry-run` | `false` | Generate message without committing |
 | `--verbose` | `false` | Show detailed output |
-| `--pattern` | `write_commit_message` | Pattern to use for message generation |
 | `--temperature` | `1` | AI creativity level (0-2) |
 | `--topp` | `1` | Nucleus sampling parameter (0-1) |
-| `--model` | `gpt-4o-mini` | OpenAI model to use |
+| `--model` | from setup | OpenAI model to use |
 | `--presence` | `0` | Presence penalty (-2 to 2) |
 | `--frequency` | `0` | Frequency penalty (-2 to 2) |
-| `--reinstall-patterns` | `false` | Force reinstallation of all patterns |
-| `--setup` | `false` | Configure OpenAI API key |
+| `--setup` | `false` | Configure OpenAI settings |
 
 ## 🔧 How It Works
 
-1. **Validates environment** - Checks for git repository and OpenAI API key
+1. **Validates environment** - Checks for git repository and OpenAI settings
 2. **Analyzes changes** - Processes your staged git diff using semantic chunking
 3. **Generates message** - Uses OpenAI API to create meaningful commit message
 4. **Commits changes** - Applies the generated message (unless `--dry-run`)
@@ -122,22 +117,22 @@ write-commit --dry-run --verbose --temperature 0.5 --reinstall-patterns
 
 ```bash
 # Run the setup wizard
-write-commit --setup
+WriteCommit --setup
 ```
 
-This will prompt you to enter your API key and securely save it to `~/.writecommit/config.json`.
+This will prompt you to enter your API key (if needed), API endpoint, and default model, then save them to `~/.writecommit/config.json`.
 
 **Option 2: Using Environment Variables**
 
 ```bash
 # Linux/macOS
-export OPENAI_API_KEY="your-api-key-here"
+export OPENAI_API_KEY="your-api-key-here"  # optional
 
 # Windows (PowerShell)
-$env:OPENAI_API_KEY="your-api-key-here"
+$env:OPENAI_API_KEY="your-api-key-here"  # optional
 
 # Windows (Command Prompt)
-set OPENAI_API_KEY=your-api-key-here
+set OPENAI_API_KEY=your-api-key-here  # optional
 ```
 
 For persistent configuration, add the export to your shell profile (`~/.bashrc`, `~/.zshrc`, etc.) or Windows environment variables.
@@ -165,8 +160,8 @@ directly from VS Code. To try it out:
 
 The extension adds a Source Control panel action that runs `WriteCommit --dry-run`
 and inserts the generated message into the commit input box. It installs the
-CLI automatically if missing and supports configuring the OpenAI API key and
-executable path via settings.
+CLI automatically if missing and supports configuring the OpenAI API key,
+endpoint, model, and executable path via settings.
 
 ### Publishing
 The workflow `.github/workflows/publish-extension.yml` uses `vsce publish` to

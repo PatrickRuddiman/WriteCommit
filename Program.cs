@@ -14,11 +14,6 @@ class Program
             "Generate commit message without committing"
         );
         var verboseOption = new Option<bool>("--verbose", "Show detailed output");
-        var patternOption = new Option<string>(
-            "--pattern",
-            () => PatternNames.CommitPattern,
-            "Pattern to use for message generation"
-        );
         var temperatureOption = new Option<int>(
             "--temperature",
             () => 1,
@@ -31,10 +26,9 @@ class Program
             () => 0,
             "Frequency penalty for AI model"
         );
-        var modelOption = new Option<string>(
+        var modelOption = new Option<string?>(
             "--model",
-            () => "gpt-4o-mini",
-            "AI model to use (default: gpt-4o-mini)"
+            description: "AI model to use (overrides setup)"
         );
 
         var setupOption = new Option<bool>(
@@ -46,7 +40,6 @@ class Program
         {
             dryRunOption,
             verboseOption,
-            patternOption,
             temperatureOption,
             topPOption,
             presenceOption,
@@ -59,12 +52,11 @@ class Program
             async (
                 bool dryRun,
                 bool verbose,
-                string pattern,
                 int temperature,
                 int topP,
                 int presence,
                 int frequency,
-                string model
+                string? model
             ) =>
             {
                 try
@@ -84,7 +76,6 @@ class Program
                     await GenerateCommitMessage(
                         dryRun,
                         verbose,
-                        pattern,
                         temperature,
                         topP,
                         presence,
@@ -100,7 +91,6 @@ class Program
             },
             dryRunOption,
             verboseOption,
-            patternOption,
             temperatureOption,
             topPOption,
             presenceOption,
@@ -114,12 +104,11 @@ class Program
     static async Task GenerateCommitMessage(
         bool dryRun,
         bool verbose,
-        string pattern,
         int temperature,
         int topP,
         int presence,
         int frequency,
-        string model
+        string? model
     )
     {
         var gitService = new GitService();
@@ -137,7 +126,10 @@ class Program
         }
 
         // Create OpenAI service with the API key
-        var openAiService = new OpenAIService(apiKey);
+        var endpoint = await configService.GetOpenAiEndpointAsync() ?? "https://api.openai.com/v1";
+        var defaultModel = await configService.GetDefaultModelAsync() ?? "gpt-4o-mini";
+
+        var openAiService = new OpenAIService(apiKey, endpoint);
 
         // Check if we're in a git repository
         if (!Directory.Exists(".git") && !await gitService.IsInGitRepositoryAsync())
@@ -182,14 +174,15 @@ class Program
         }
 
         // Generate commit message using OpenAI with chunking support
+        var finalModel = string.IsNullOrWhiteSpace(model) ? defaultModel : model;
         var commitMessage = await openAiService.GenerateCommitMessageAsync(
             chunks,
-            pattern,
+            PatternNames.CommitPattern,
             temperature,
             topP,
             presence,
             frequency,
-            model,
+            finalModel,
             verbose
         );
 
