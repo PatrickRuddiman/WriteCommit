@@ -44,6 +44,53 @@ public class GitService
         return result.Output;
     }
 
+    public async Task<string> GetCommitChangesAsync(string commitHash, bool verbose = false)
+    {
+        // First validate that the commit exists
+        var validateResult = await RunCommandAsync(
+            "git",
+            $"rev-parse --verify {commitHash}",
+            verbose
+        );
+        if (validateResult.ExitCode != 0)
+        {
+            throw new InvalidOperationException($"Invalid commit hash: {commitHash}");
+        }
+
+        // Get the diff between the commit and its parent
+        var args = $"--no-pager show --format= {commitHash}";
+        var result = await RunCommandAsync("git", args, verbose);
+        if (result.ExitCode != 0)
+        {
+            throw new InvalidOperationException(
+                $"Failed to get changes for commit {commitHash}: {result.Error}"
+            );
+        }
+        return result.Output;
+    }
+
+    public async Task<string> GetCurrentHeadAsync(bool verbose = false)
+    {
+        var result = await RunCommandAsync("git", "rev-parse HEAD", verbose);
+        if (result.ExitCode != 0)
+        {
+            throw new InvalidOperationException($"Failed to get current HEAD: {result.Error}");
+        }
+        return result.Output.Trim();
+    }
+
+    public async Task<string> ResolveCommitHashAsync(string commitRef, bool verbose = false)
+    {
+        var result = await RunCommandAsync("git", $"rev-parse {commitRef}", verbose);
+        if (result.ExitCode != 0)
+        {
+            throw new InvalidOperationException(
+                $"Failed to resolve commit reference {commitRef}: {result.Error}"
+            );
+        }
+        return result.Output.Trim();
+    }
+
     public async Task CommitChangesAsync(string commitMessage, bool verbose)
     {
         // Create temporary file for commit message
@@ -55,6 +102,28 @@ public class GitService
             // Commit using git
             await RunGitCommandAsync($"commit -F \"{tempFile}\"", verbose);
             Console.WriteLine("Changes committed successfully!");
+        }
+        finally
+        {
+            // Clean up temporary file
+            if (File.Exists(tempFile))
+            {
+                File.Delete(tempFile);
+            }
+        }
+    }
+
+    public async Task AmendCommitAsync(string commitHash, string commitMessage, bool verbose)
+    {
+        // Create temporary file for commit message
+        var tempFile = Path.GetTempFileName();
+        try
+        {
+            await File.WriteAllTextAsync(tempFile, commitMessage, Encoding.UTF8);
+
+            // Amend the current commit (validation already done in Program.cs)
+            await RunGitCommandAsync($"commit --amend -F \"{tempFile}\"", verbose);
+            Console.WriteLine($"Commit {commitHash} amended successfully with new message!");
         }
         finally
         {

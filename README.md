@@ -86,6 +86,9 @@ WriteCommit --verbose
 # Custom AI parameters
 WriteCommit --temperature 0.7 --topp 0.9
 
+# Amend existing commit with new AI-generated message
+WriteCommit --amended abc1234 --dry-run
+
 # Combine multiple options
 WriteCommit --dry-run --verbose --temperature 0.5
 ```
@@ -101,6 +104,7 @@ WriteCommit --dry-run --verbose --temperature 0.5
 | `--model` | from setup | OpenAI model to use |
 | `--presence` | `0` | Presence penalty (-2 to 2) |
 | `--frequency` | `0` | Frequency penalty (-2 to 2) |
+| `--amended` | none | Git hash to amend - generates message based on changes from this commit compared to its parent |
 | `--setup` | `false` | Configure OpenAI or Azure OpenAI settings |
 
 ## 🔧 How It Works

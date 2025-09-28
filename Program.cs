@@ -34,6 +34,10 @@ class Program
             "--model",
             description: "AI model to use (overrides setup)"
         );
+        var amendedOption = new Option<string?>(
+            "--amended",
+            description: "Git hash to amend - generates message based on changes from this commit compared to its parent"
+        );
 
         var setupOption = new Option<bool>("--setup", "Configure OpenAI or Azure OpenAI settings");
 
@@ -48,6 +52,7 @@ class Program
             presenceOption,
             frequencyOption,
             modelOption,
+            amendedOption,
             setupOption,
         };
 
@@ -59,7 +64,8 @@ class Program
                 int topP,
                 int presence,
                 int frequency,
-                string? model
+                string? model,
+                string? amended
             ) =>
             {
                 try
@@ -83,7 +89,8 @@ class Program
                         topP,
                         presence,
                         frequency,
-                        model
+                        model,
+                        amended
                     );
                 }
                 catch (Exception ex)
@@ -98,7 +105,8 @@ class Program
             topPOption,
             presenceOption,
             frequencyOption,
-            modelOption
+            modelOption,
+            amendedOption
         );
 
         return await rootCommand.InvokeAsync(args);
@@ -111,7 +119,8 @@ class Program
         int topP,
         int presence,
         int frequency,
-        string? model
+        string? model,
+        string? amended
     )
     {
         var gitService = new GitService();
@@ -143,46 +152,93 @@ class Program
             );
         }
 
-        // Get staged changes
-        var stagedChanges = await gitService.GetStagedChangesAsync(verbose);
+        string changes;
 
-        // If the diff is very small, grab a few extra lines of context
-        var fileCount = System
-            .Text.RegularExpressions.Regex.Matches(
-                stagedChanges,
-                "^diff --git",
-                System.Text.RegularExpressions.RegexOptions.Multiline
-            )
-            .Count;
-        var lineCount = stagedChanges.Split('\n').Length;
-
-        if (
-            fileCount <= DiffContextDefaults.SmallDiffFileThreshold
-            && lineCount < DiffContextDefaults.SmallDiffLineThreshold
-        )
+        if (!string.IsNullOrWhiteSpace(amended))
         {
+            // Validate that we can only amend HEAD if not in dry-run mode
+            if (!dryRun)
+            {
+                var headResult = await gitService.GetCurrentHeadAsync(verbose);
+                var commitToAmend = await gitService.ResolveCommitHashAsync(amended, verbose);
+
+                if (headResult != commitToAmend)
+                {
+                    throw new InvalidOperationException(
+                        $"Can only amend the current HEAD commit. Current HEAD is {headResult[..8]}, but you specified {amended}"
+                    );
+                }
+            }
+
+            // Get changes from the specified commit compared to its parent
+            changes = await gitService.GetCommitChangesAsync(amended, verbose);
+
             if (verbose)
             {
-                Console.WriteLine("Small diff detected, gathering additional context...");
+                Console.WriteLine(
+                    $"Retrieved changes for commit {amended} compared to its parent."
+                );
             }
-            stagedChanges = await gitService.GetStagedChangesWithContextAsync(
-                DiffContextDefaults.ExtraContextLines,
-                verbose
-            );
         }
-        if (string.IsNullOrWhiteSpace(stagedChanges))
+        else
         {
-            Console.WriteLine(
-                "No staged changes found. Please stage your changes first using 'git add'."
-            );
+            // Get staged changes (original behavior)
+            changes = await gitService.GetStagedChangesAsync(verbose);
+
+            // If the diff is very small, grab a few extra lines of context
+            var fileCount = System
+                .Text.RegularExpressions.Regex.Matches(
+                    changes,
+                    "^diff --git",
+                    System.Text.RegularExpressions.RegexOptions.Multiline
+                )
+                .Count;
+            var lineCount = changes.Split('\n').Length;
+
+            if (
+                fileCount <= DiffContextDefaults.SmallDiffFileThreshold
+                && lineCount < DiffContextDefaults.SmallDiffLineThreshold
+            )
+            {
+                if (verbose)
+                {
+                    Console.WriteLine("Small diff detected, gathering additional context...");
+                }
+                changes = await gitService.GetStagedChangesWithContextAsync(
+                    DiffContextDefaults.ExtraContextLines,
+                    verbose
+                );
+            }
+        }
+        if (string.IsNullOrWhiteSpace(changes))
+        {
+            if (!string.IsNullOrWhiteSpace(amended))
+            {
+                Console.WriteLine($"No changes found for commit {amended}.");
+            }
+            else
+            {
+                Console.WriteLine(
+                    "No staged changes found. Please stage your changes first using 'git add'."
+                );
+            }
             return;
         }
 
         if (verbose)
         {
-            Console.WriteLine(
-                "Staged changes detected. Analyzing and generating commit message..."
-            );
+            if (!string.IsNullOrWhiteSpace(amended))
+            {
+                Console.WriteLine(
+                    $"Commit changes detected for {amended}. Analyzing and generating commit message..."
+                );
+            }
+            else
+            {
+                Console.WriteLine(
+                    "Staged changes detected. Analyzing and generating commit message..."
+                );
+            }
         }
 
         // Initialize semantic analyzer
@@ -193,7 +249,7 @@ class Program
         var analyzer = new SemanticCoherenceAnalyzer(logger);
 
         // Chunk the diff if it's large
-        var chunks = analyzer.ChunkDiff(stagedChanges, verbose);
+        var chunks = analyzer.ChunkDiff(changes, verbose);
 
         if (chunks.Count > 1 && verbose)
         {
@@ -234,7 +290,14 @@ class Program
         }
 
         // Commit the changes
-        await gitService.CommitChangesAsync(commitMessage, verbose);
+        if (!string.IsNullOrWhiteSpace(amended))
+        {
+            await gitService.AmendCommitAsync(amended, commitMessage, verbose);
+        }
+        else
+        {
+            await gitService.CommitChangesAsync(commitMessage, verbose);
+        }
     }
 
     /// <summary>
