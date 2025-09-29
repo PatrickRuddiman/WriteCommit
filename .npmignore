@@ -1,0 +1,34 @@
+# Source TypeScript files
+src/
+tsconfig.json
+
+# Development files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# C# files (not needed for npm package)
+*.cs
+*.csproj
+*.sln
+bin/
+obj/
+
+# Build and test files
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Git files
+.git/
+.gitignore
+
+# Installation scripts (C# specific)
+install*.sh
+install*.ps1
+demo.ps1
+
+# Version control
+GitVersion.yml

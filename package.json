@@ -21,7 +21,9 @@
     "openai",
     "cli",
     "tool",
-    "typescript"
+    "typescript",
+    "commit-message",
+    "automation"
   ],
   "author": "prudd",
   "license": "MIT",
@@ -39,7 +41,7 @@
   "files": [
     "dist/**/*",
     "patterns/**/*",
-    "README.md",
+    "README-npm.md",
     "LICENSE"
   ],
   "dependencies": {

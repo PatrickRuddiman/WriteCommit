@@ -1,6 +1,11 @@
 # WriteCommit
 
-A cross-platform .NET tool that generates AI-powered commit messages using OpenAI or Azure OpenAI.
+A cross-platform tool that generates AI-powered commit messages using OpenAI or Azure OpenAI.
+
+> **🆕 New TypeScript/npm Version Available!**  
+> This project is now also available as an npm package for Node.js environments.  
+> Install with: `npm install -g write-commit`  
+> See [README-npm.md](README-npm.md) for npm-specific documentation.
 
 ## ✨ Features
 
@@ -14,6 +19,16 @@ A cross-platform .NET tool that generates AI-powered commit messages using OpenA
 - 🔍 **Context-aware** - Adds surrounding code lines when diffs are very small for better summaries
 
 ## 🚀 Quick Start
+
+### Installation Options
+
+**Option 1: npm package (recommended for Node.js users):**
+```bash
+npm install -g write-commit
+write-commit --help
+```
+
+**Option 2: .NET self-contained executable:**
 
 ### Prerequisites
 
