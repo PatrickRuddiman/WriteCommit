@@ -1,0 +1,49 @@
+name: Commitlint
+on:
+  pull_request:
+    types: [opened, edited, synchronize]
+jobs:
+  lint-fix:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - run: npm ci
+      - name: Install fabric
+        run: |
+          curl -fsSL https://raw.githubusercontent.com/danielmiessler/fabric/main/scripts/installer/install.sh | bash
+      - name: Lint PR squash commit (title + desc) and auto-fix with fabric if needed
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          OPENAI_API_BASE_URL: "https://api.openai.com/v1"
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -e
+          mkdir -p "$HOME/.config/fabric"
+          touch "$HOME/.config/fabric/.env"
+          fabric -U
+          # Lint the squash commit (title + desc)
+          echo -e "${{ github.event.pull_request.title }}\n\n${{ github.event.pull_request.body }}" | npx -y commitlint && exit 0
+          # Summarize each commit's diff and append to a temporary file
+          TMP_CHANGELOG=$(mktemp)
+          COMMITS=$(git rev-list --reverse origin/main..HEAD)
+          for COMMIT in $COMMITS; do
+            echo "Summarizing $COMMIT..."
+            git show $COMMIT --no-patch --format="%h %s" >> "$TMP_CHANGELOG"
+            git --no-pager diff $COMMIT^ $COMMIT | fabric -m gpt-4o-mini -p summarize_git_diff >> "$TMP_CHANGELOG"
+            echo -e "\n---\n" >> "$TMP_CHANGELOG"
+          done
+          NEW_BODY=$(cat "$TMP_CHANGELOG" | fabric -m gpt-4o-mini -u https://www.conventionalcommits.org/en/v1.0.0/#summary "write a pull request description. start with a summary of key changes emphasising important factors of convential commits (fix, feat, chore, BREAKING CHANGE, etc). followed by followed by a changelog of commits. based on the following commits (dont add comentary as it will be directly used in the pr):")
+          PR_COMMITS=$(gh pr view $PR_NUMBER --json commits | jq -r '.commits[] | "\(.messageHeadline): \(.messageBody)"' | paste -sd ", " -)
+          NEW_TITLE=$(fabric -m gpt-4o-mini "write a conventional commits compatible title for a PR with the following commits and PR description: $PR_COMMITS; $NEW_BODY")
+          rm -f "$TMP_CHANGELOG"
+          gh pr edit $PR_NUMBER --title "$NEW_TITLE" --body "$NEW_BODY"

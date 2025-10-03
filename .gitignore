@@ -1,48 +1,9 @@
-# .NET
-bin/
-obj/
-out/
-*.user
-*.userosscache
-*.sln.docstates
-*.userprefs
-
-# Build results
-[Dd]ebug/
-[Dd]ebugPublic/
-[Rr]elease/
-[Rr]eleases/
-x64/
-x86/
-build/
-bld/
-[Bb]in/
-[Oo]bj/
-[Oo]ut/
-msbuild.log
-msbuild.err
-msbuild.wrn
-
-# Visual Studio
-.vs/
-*.rsuser
-*.suo
-*.user
-*.userosscache
-*.sln.docstates
-*.userprefs
-
 # IDE
 .vscode/
 .idea/
 *.swp
 *.swo
 *~
-
-# Dependencies
-packages/
-*.nupkg
-*.snupkg
 
 # Temporary files
 *.tmp
@@ -58,5 +19,27 @@ packages/
 ehthumbs.db
 Thumbs.db
 
-# Fabric temporary files
-fabric_temp_*
+# TypeScript build output
+dist/
+*.tsbuildinfo
+
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Semantic Release
+.semantic-release/
+
+# Coverage
+coverage/
+.nyc_output/
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# VSCode Extension
+*.vsix
