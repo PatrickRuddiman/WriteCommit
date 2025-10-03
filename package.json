@@ -1,0 +1,147 @@
+{
+  "name": "write-commit",
+  "version": "1.0.0",
+  "description": "A cross-platform tool that generates AI-powered commit messages using OpenAI, Azure OpenAI, or GitHub Copilot",
+  "main": "dist/cli/index.js",
+  "types": "dist/cli/index.d.ts",
+  "bin": {
+    "write-commit": "dist/cli/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "build:cli": "tsc -p tsconfig.cli.json",
+    "build:extension": "tsc -p tsconfig.extension.json && npm run copy-patterns",
+    "copy-patterns": "cp -r patterns dist/",
+    "watch": "tsc -w",
+    "watch:cli": "tsc -w -p tsconfig.cli.json",
+    "watch:extension": "tsc -w -p tsconfig.extension.json",
+    "package:extension": "vsce package",
+    "lint": "eslint src --ext ts",
+    "test": "jest"
+  },
+  "keywords": [
+    "git",
+    "commit",
+    "ai",
+    "openai",
+    "azure",
+    "copilot",
+    "cli",
+    "vscode",
+    "extension"
+  ],
+  "author": "prudd",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/PatrickRuddiman/WriteCommit"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onCommand:write-commit.generateCommitMessage"
+  ],
+  "contributes": {
+    "commands": [
+      {
+        "command": "write-commit.generateCommitMessage",
+        "title": "WriteCommit: Generate Commit Message",
+        "icon": "$(edit)"
+      }
+    ],
+    "menus": {
+      "scm/title": [
+        {
+          "command": "write-commit.generateCommitMessage",
+          "group": "navigation",
+          "when": "scmProvider == git"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "WriteCommit",
+      "properties": {
+        "writeCommit.provider": {
+          "type": "string",
+          "enum": [
+            "openai",
+            "azure",
+            "vscode-lm"
+          ],
+          "default": "vscode-lm",
+          "description": "AI provider to use for generating commit messages"
+        },
+        "writeCommit.openaiApiKey": {
+          "type": "string",
+          "default": "",
+          "description": "OpenAI API key (can also be set via OPENAI_API_KEY env variable)"
+        },
+        "writeCommit.azureEndpoint": {
+          "type": "string",
+          "default": "",
+          "description": "Azure OpenAI endpoint URL"
+        },
+        "writeCommit.defaultModel": {
+          "type": "string",
+          "default": "gpt-4o-mini",
+          "description": "Default AI model or deployment name"
+        },
+        "writeCommit.temperature": {
+          "type": "number",
+          "default": 1,
+          "minimum": 0,
+          "maximum": 2,
+          "description": "Temperature setting for AI model (0-2)"
+        },
+        "writeCommit.topP": {
+          "type": "number",
+          "default": 1,
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Top-p sampling parameter (0-1)"
+        },
+        "writeCommit.verbose": {
+          "type": "boolean",
+          "default": false,
+          "description": "Show detailed output in logs"
+        }
+      }
+    }
+  },
+  "dependencies": {
+    "openai": "^4.67.3",
+    "@azure/openai": "^2.0.0",
+    "simple-git": "^3.27.0",
+    "commander": "^12.1.0",
+    "chalk": "^4.1.2",
+    "inquirer": "^8.2.6",
+    "fs-extra": "^11.2.0",
+    "dotenv": "^16.4.5"
+  },
+  "devDependencies": {
+    "@types/node": "^20.17.6",
+    "@types/vscode": "^1.85.0",
+    "@types/inquirer": "^8.2.10",
+    "@types/fs-extra": "^11.0.4",
+    "@typescript-eslint/eslint-plugin": "^6.21.0",
+    "@typescript-eslint/parser": "^6.21.0",
+    "@vscode/vsce": "^3.2.1",
+    "eslint": "^8.57.1",
+    "typescript": "^5.7.2",
+    "@semantic-release/changelog": "^6.0.3",
+    "@semantic-release/commit-analyzer": "^11.1.0",
+    "@semantic-release/git": "^10.0.1",
+    "@semantic-release/github": "^9.2.6",
+    "@semantic-release/npm": "^11.0.2",
+    "@semantic-release/release-notes-generator": "^12.1.0",
+    "conventional-changelog-conventionalcommits": "^7.0.2",
+    "semantic-release": "^23.0.0",
+    "@commitlint/cli": "^18.6.0",
+    "@commitlint/config-conventional": "^18.6.0"
+  }
+}
